@@ -1,0 +1,41 @@
+{
+  "@@locale": "de",
+  "start": "Start",
+  "chooseYourCharacter": "Wähle deine Figur",
+  "characterSelectionSubtitle": "Such dir einen Putzfreund aus und starte ruhig in zwei Zahnputz-Minuten.",
+  "foxName": "Fuchs",
+  "gatorName": "Alligator",
+  "foxDescription": "Fröhlich, freundlich und bereit, Essensreste wegzuwischen.",
+  "gatorDescription": "Ruhig, stark und bei jeder Seite mit dabei.",
+  "letsCleanThisSide": "Lass uns diese Seite putzen!",
+  "greatJob": "Super gemacht!",
+  "keepGoing": "Weiter so!",
+  "almostDone": "Fast geschafft!",
+  "nowItsYourParentsTurn": "Jetzt sind deine Eltern dran!",
+  "plusThirtySeconds": "+30 Sekunden",
+  "finished": "Geschafft!",
+  "parentsTurnNow": "Jetzt schauen die Eltern",
+  "keepBrushingTogether": "Putzt noch ein kleines bisschen zusammen weiter.",
+  "zoneProgressHint": "Putze diese Seite weiter, dann wird sie sauber und blank.",
+  "sessionComplete": "Für jetzt sind die Zähne sauber.",
+  "timeRemaining": "Verbleibende Zeit",
+  "currentZone": "Aktuelle Zone",
+  "parentsTurn": "Eltern",
+  "backToCharacters": "Zurück zur Auswahl",
+  "cameraPreviewFallback": "Die Kameravorschau ist gerade nicht verfügbar, aber das Putzspiel kann trotzdem laufen.",
+  "banubaTokenHint": "Füge ein Banuba-Test-Token per --dart-define=BANUBA_CLIENT_TOKEN=... hinzu, um AR-Filter zu aktivieren.",
+  "banubaArUnavailable": "Banuba AR konnte noch nicht gestartet werden.",
+  "banubaPermissionRequired": "Für die AR-Vorschau wird Kamerazugriff benötigt.",
+  "zoneTopLeft": "Oben links",
+  "zoneTopRight": "Oben rechts",
+  "zoneBottomLeft": "Unten links",
+  "zoneBottomRight": "Unten rechts",
+  "cleanZoneInstruction": "Putze die Seite {zone}.",
+  "@cleanZoneInstruction": {
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  }
+}

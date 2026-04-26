@@ -1,0 +1,41 @@
+{
+  "@@locale": "en",
+  "start": "Start",
+  "chooseYourCharacter": "Choose your character",
+  "characterSelectionSubtitle": "Pick a brushing buddy and begin your calm two-minute clean.",
+  "foxName": "Fox",
+  "gatorName": "Gator",
+  "foxDescription": "Warm, cheerful, and ready to swish away snack crumbs.",
+  "gatorDescription": "Cool, steady, and happy to help with every side.",
+  "letsCleanThisSide": "Let's clean this side!",
+  "greatJob": "Great job!",
+  "keepGoing": "Keep going!",
+  "almostDone": "Almost done!",
+  "nowItsYourParentsTurn": "Now it's your parent's turn!",
+  "plusThirtySeconds": "+30 seconds",
+  "finished": "Finished!",
+  "parentsTurnNow": "Parent check time",
+  "keepBrushingTogether": "Keep brushing together for a little longer.",
+  "zoneProgressHint": "Keep brushing this side and it will sparkle clean.",
+  "sessionComplete": "All clean for now.",
+  "timeRemaining": "Time left",
+  "currentZone": "Current zone",
+  "parentsTurn": "Parent turn",
+  "backToCharacters": "Back to characters",
+  "cameraPreviewFallback": "Camera preview is not available right now, but the brushing game can still run.",
+  "banubaTokenHint": "Add a Banuba trial token via --dart-define=BANUBA_CLIENT_TOKEN=... to enable AR filters.",
+  "banubaArUnavailable": "Banuba AR could not start yet.",
+  "banubaPermissionRequired": "Camera access is required for AR preview.",
+  "zoneTopLeft": "Top left",
+  "zoneTopRight": "Top right",
+  "zoneBottomLeft": "Bottom left",
+  "zoneBottomRight": "Bottom right",
+  "cleanZoneInstruction": "Clean the {zone} side.",
+  "@cleanZoneInstruction": {
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  }
+}
