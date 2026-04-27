@@ -71,7 +71,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     )..repeat(reverse: true);
     _zoneChangeAnimation = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 720),
+      duration: const Duration(milliseconds: 1050),
       value: 1,
     );
     _initializePlainCamera();
@@ -508,32 +508,28 @@ class _FoxThemeOverlay extends StatelessWidget {
           8.0,
           constraints.maxHeight - earHeight,
         );
-        final celebration = Curves.easeOutBack.transform(zoneChangeProgress);
-        final inwardOffset = (1 - celebration) * 34;
-        final settleDrop =
-            (1 - Curves.easeOut.transform(zoneChangeProgress)) * 12;
-        final leftEarLeft =
-            (headCenterX - earGap / 2 - earWidth * 0.5 + inwardOffset).clamp(
-              8.0,
-              constraints.maxWidth - earWidth - 8,
-            );
+        final outwardTurn =
+            math.sin(Curves.easeInOut.transform(zoneChangeProgress) * math.pi) *
+            0.48;
+        final leftEarLeft = (headCenterX - earGap / 2 - earWidth * 0.5).clamp(
+          8.0,
+          constraints.maxWidth - earWidth - 8,
+        );
         final rightEarRight =
-            (constraints.maxWidth -
-                    (headCenterX + earGap / 2 + earWidth * 0.5) +
-                    inwardOffset)
+            (constraints.maxWidth - (headCenterX + earGap / 2 + earWidth * 0.5))
                 .clamp(8.0, constraints.maxWidth - earWidth - 8);
 
         return Stack(
           children: [
             Positioned(
-              top: earTop + settleDrop,
+              top: earTop,
               left: leftEarLeft,
-              child: const _FoxEarDecoration(flip: false),
+              child: _FoxEarDecoration(flip: false, outwardTurn: outwardTurn),
             ),
             Positioned(
-              top: earTop + settleDrop,
+              top: earTop,
               right: rightEarRight,
-              child: const _FoxEarDecoration(flip: true),
+              child: _FoxEarDecoration(flip: true, outwardTurn: outwardTurn),
             ),
             _EarPlacementGuides(
               color: const Color(0xFFF28B50).withValues(alpha: 0.16),
@@ -755,15 +751,20 @@ class _BrushingGuidePainter extends CustomPainter {
 }
 
 class _FoxEarDecoration extends StatelessWidget {
-  const _FoxEarDecoration({required this.flip});
+  const _FoxEarDecoration({required this.flip, required this.outwardTurn});
 
   final bool flip;
+  final double outwardTurn;
 
   @override
   Widget build(BuildContext context) {
+    final turnDirection = flip ? -1.0 : 1.0;
     return Transform(
-      alignment: Alignment.center,
-      transform: Matrix4.diagonal3Values(flip ? -1.0 : 1.0, 1.0, 1.0),
+      alignment: flip ? Alignment.centerLeft : Alignment.centerRight,
+      transform: Matrix4.identity()
+        ..setEntry(3, 2, 0.001)
+        ..rotateY(outwardTurn * turnDirection)
+        ..multiply(Matrix4.diagonal3Values(flip ? -1.0 : 1.0, 1.0, 1.0)),
       child: CustomPaint(size: const Size(74, 88), painter: _FoxEarPainter()),
     );
   }
