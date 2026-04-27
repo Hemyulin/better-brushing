@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -31,14 +32,16 @@ class CameraGameScreen extends StatefulWidget {
 }
 
 class _CameraGameScreenState extends State<CameraGameScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final BrushingSessionController _controller;
   late final AnimationController _characterAnimation;
+  late final AnimationController _zoneChangeAnimation;
   StreamSubscription<void>? _volumeButtonSubscription;
   CameraController? _cameraController;
   Future<void>? _cameraFuture;
   FaceDetectorProcessor? _faceDetector;
   Rect? _trackedFaceBounds;
+  late BrushingZone _lastAnimatedZone;
   DateTime _lastFaceFrameStartedAt = DateTime.fromMillisecondsSinceEpoch(0);
   bool _isProcessingFaceFrame = false;
   bool _isStreamingCameraImages = false;
@@ -57,6 +60,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       brushingDurationSeconds: widget.settings.brushingDurationSeconds,
       zoneOrder: widget.settings.zoneOrder,
     )..start();
+    _lastAnimatedZone = _controller.currentZone;
     _controller.addListener(_handleSessionChanged);
     _configureVolumePause();
     _characterAnimation = AnimationController(
@@ -65,6 +69,11 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       lowerBound: 0.94,
       upperBound: 1.05,
     )..repeat(reverse: true);
+    _zoneChangeAnimation = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 720),
+      value: 1,
+    );
     _initializePlainCamera();
   }
 
@@ -249,6 +258,11 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     if (!mounted) {
       return;
     }
+    if (_controller.phase == SessionPhase.brushing &&
+        _controller.currentZone != _lastAnimatedZone) {
+      _lastAnimatedZone = _controller.currentZone;
+      _zoneChangeAnimation.forward(from: 0);
+    }
     setState(() {});
   }
 
@@ -265,6 +279,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       ..dispose();
     _cameraController?.dispose();
     _characterAnimation.dispose();
+    _zoneChangeAnimation.dispose();
     super.dispose();
   }
 
@@ -308,6 +323,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                               child: _CharacterThemeOverlay(
                                 character: widget.character,
                                 faceBounds: _trackedFaceBounds,
+                                zoneChangeAnimation: _zoneChangeAnimation,
                               ),
                             ),
                             Positioned.fill(
@@ -430,26 +446,43 @@ class _CharacterThemeOverlay extends StatelessWidget {
   const _CharacterThemeOverlay({
     required this.character,
     required this.faceBounds,
+    required this.zoneChangeAnimation,
   });
 
   final BrushingCharacter character;
   final Rect? faceBounds;
+  final Animation<double> zoneChangeAnimation;
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: switch (character) {
-        BrushingCharacter.fox => _FoxThemeOverlay(faceBounds: faceBounds),
-        BrushingCharacter.gator => _GatorThemeOverlay(faceBounds: faceBounds),
+    return AnimatedBuilder(
+      animation: zoneChangeAnimation,
+      builder: (context, _) {
+        return IgnorePointer(
+          child: switch (character) {
+            BrushingCharacter.fox => _FoxThemeOverlay(
+              faceBounds: faceBounds,
+              zoneChangeProgress: zoneChangeAnimation.value,
+            ),
+            BrushingCharacter.gator => _GatorThemeOverlay(
+              faceBounds: faceBounds,
+              zoneChangeProgress: zoneChangeAnimation.value,
+            ),
+          },
+        );
       },
     );
   }
 }
 
 class _FoxThemeOverlay extends StatelessWidget {
-  const _FoxThemeOverlay({required this.faceBounds});
+  const _FoxThemeOverlay({
+    required this.faceBounds,
+    required this.zoneChangeProgress,
+  });
 
   final Rect? faceBounds;
+  final double zoneChangeProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -475,23 +508,30 @@ class _FoxThemeOverlay extends StatelessWidget {
           8.0,
           constraints.maxHeight - earHeight,
         );
-        final leftEarLeft = (headCenterX - earGap / 2 - earWidth * 0.5).clamp(
-          8.0,
-          constraints.maxWidth - earWidth - 8,
-        );
+        final celebration = Curves.easeOutBack.transform(zoneChangeProgress);
+        final inwardOffset = (1 - celebration) * 34;
+        final settleDrop =
+            (1 - Curves.easeOut.transform(zoneChangeProgress)) * 12;
+        final leftEarLeft =
+            (headCenterX - earGap / 2 - earWidth * 0.5 + inwardOffset).clamp(
+              8.0,
+              constraints.maxWidth - earWidth - 8,
+            );
         final rightEarRight =
-            (constraints.maxWidth - (headCenterX + earGap / 2 + earWidth * 0.5))
+            (constraints.maxWidth -
+                    (headCenterX + earGap / 2 + earWidth * 0.5) +
+                    inwardOffset)
                 .clamp(8.0, constraints.maxWidth - earWidth - 8);
 
         return Stack(
           children: [
             Positioned(
-              top: earTop,
+              top: earTop + settleDrop,
               left: leftEarLeft,
               child: const _FoxEarDecoration(flip: false),
             ),
             Positioned(
-              top: earTop,
+              top: earTop + settleDrop,
               right: rightEarRight,
               child: const _FoxEarDecoration(flip: true),
             ),
@@ -506,9 +546,13 @@ class _FoxThemeOverlay extends StatelessWidget {
 }
 
 class _GatorThemeOverlay extends StatelessWidget {
-  const _GatorThemeOverlay({required this.faceBounds});
+  const _GatorThemeOverlay({
+    required this.faceBounds,
+    required this.zoneChangeProgress,
+  });
 
   final Rect? faceBounds;
+  final double zoneChangeProgress;
 
   @override
   Widget build(BuildContext context) {
@@ -540,6 +584,7 @@ class _GatorThemeOverlay extends StatelessWidget {
         final browTop = face == null
             ? 24.0
             : headTop.clamp(8.0, constraints.maxHeight - browHeight);
+        final happyEyes = math.sin(zoneChangeProgress * math.pi);
 
         return Stack(
           children: [
@@ -547,7 +592,7 @@ class _GatorThemeOverlay extends StatelessWidget {
               top: browTop,
               left: browLeft,
               width: browWidth,
-              child: const _GatorBrowDecoration(),
+              child: _GatorBrowDecoration(happyEyes: happyEyes),
             ),
             _EarPlacementGuides(
               color: const Color(0xFF43B49D).withValues(alpha: 0.16),
@@ -753,18 +798,24 @@ class _FoxEarPainter extends CustomPainter {
 }
 
 class _GatorBrowDecoration extends StatelessWidget {
-  const _GatorBrowDecoration();
+  const _GatorBrowDecoration({required this.happyEyes});
+
+  final double happyEyes;
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 3.4,
-      child: CustomPaint(painter: _GatorBrowPainter()),
+      child: CustomPaint(painter: _GatorBrowPainter(happyEyes: happyEyes)),
     );
   }
 }
 
 class _GatorBrowPainter extends CustomPainter {
+  const _GatorBrowPainter({required this.happyEyes});
+
+  final double happyEyes;
+
   @override
   void paint(Canvas canvas, Size size) {
     final basePaint = Paint()
@@ -774,7 +825,17 @@ class _GatorBrowPainter extends CustomPainter {
       ..color = const Color(0xFF76D7C4).withValues(alpha: 0.92)
       ..style = PaintingStyle.fill;
     final eyePaint = Paint()..color = Colors.white.withValues(alpha: 0.96);
-    final pupilPaint = Paint()..color = const Color(0xFF214C44);
+    final pupilPaint = Paint()
+      ..color = const Color(
+        0xFF214C44,
+      ).withValues(alpha: (1 - happyEyes).clamp(0.0, 1.0));
+    final happyEyePaint = Paint()
+      ..color = const Color(
+        0xFF214C44,
+      ).withValues(alpha: happyEyes.clamp(0.0, 1.0))
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = (size.width * 0.02).clamp(3.0, 7.0);
     final toothPaint = Paint()..color = Colors.white.withValues(alpha: 0.98);
 
     final ridge = Path()
@@ -850,27 +911,52 @@ class _GatorBrowPainter extends CustomPainter {
     canvas.drawOval(leftEye, eyePaint);
     canvas.drawOval(rightEye, eyePaint);
 
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: leftEye.center,
-          width: leftEye.width * 0.18,
-          height: leftEye.height * 0.84,
+    if (happyEyes < 0.98) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: leftEye.center,
+            width: leftEye.width * 0.18,
+            height: leftEye.height * 0.84,
+          ),
+          const Radius.circular(4),
         ),
-        const Radius.circular(4),
+        pupilPaint,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: rightEye.center,
+            width: rightEye.width * 0.18,
+            height: rightEye.height * 0.84,
+          ),
+          const Radius.circular(4),
+        ),
+        pupilPaint,
+      );
+    }
+
+    canvas.drawArc(
+      Rect.fromCenter(
+        center: leftEye.center.translate(0, -leftEye.height * 0.04),
+        width: leftEye.width * 0.72,
+        height: leftEye.height * 0.62,
       ),
-      pupilPaint,
+      math.pi + 0.2,
+      math.pi - 0.4,
+      false,
+      happyEyePaint,
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: rightEye.center,
-          width: rightEye.width * 0.18,
-          height: rightEye.height * 0.84,
-        ),
-        const Radius.circular(4),
+    canvas.drawArc(
+      Rect.fromCenter(
+        center: rightEye.center.translate(0, -rightEye.height * 0.04),
+        width: rightEye.width * 0.72,
+        height: rightEye.height * 0.62,
       ),
-      pupilPaint,
+      math.pi + 0.2,
+      math.pi - 0.4,
+      false,
+      happyEyePaint,
     );
 
     for (final x in <double>[0.26, 0.38, 0.5, 0.62, 0.74]) {
@@ -884,7 +970,9 @@ class _GatorBrowPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _GatorBrowPainter oldDelegate) {
+    return oldDelegate.happyEyes != happyEyes;
+  }
 }
 
 class _EarPlacementGuides extends StatelessWidget {
