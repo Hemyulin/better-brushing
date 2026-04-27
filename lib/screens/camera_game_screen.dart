@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
 
 import '../controllers/brushing_session_controller.dart';
 import '../l10n/app_localizations.dart';
@@ -34,6 +37,18 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   StreamSubscription<void>? _volumeButtonSubscription;
   CameraController? _cameraController;
   Future<void>? _cameraFuture;
+  FaceDetectorProcessor? _faceDetector;
+  Rect? _trackedFaceBounds;
+  DateTime _lastFaceFrameStartedAt = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _isProcessingFaceFrame = false;
+  bool _isStreamingCameraImages = false;
+
+  static const Map<DeviceOrientation, int> _deviceOrientationDegrees = {
+    DeviceOrientation.portraitUp: 0,
+    DeviceOrientation.landscapeLeft: 90,
+    DeviceOrientation.portraitDown: 180,
+    DeviceOrientation.landscapeRight: 270,
+  };
 
   @override
   void initState() {
@@ -84,9 +99,150 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       frontCamera,
       ResolutionPreset.medium,
       enableAudio: false,
+      imageFormatGroup: Platform.isIOS
+          ? ImageFormatGroup.bgra8888
+          : ImageFormatGroup.nv21,
     );
     _cameraController = controller;
-    _cameraFuture = controller.initialize();
+    _cameraFuture = controller.initialize().then((_) => _startFaceTracking());
+  }
+
+  Future<void> _startFaceTracking() async {
+    final controller = _cameraController;
+    if (controller == null || controller.value.isStreamingImages) {
+      return;
+    }
+
+    try {
+      _faceDetector ??= await FaceDetectorProcessor.create(
+        delegate: FaceMeshDelegate.xnnpack,
+        maxResults: 1,
+        minDetectionConfidence: 0.45,
+        roiScaleY: 1.7,
+        roiShiftY: -0.2,
+      );
+      await controller.startImageStream(_processCameraImage);
+      _isStreamingCameraImages = true;
+    } catch (_) {
+      _isStreamingCameraImages = false;
+    }
+  }
+
+  Future<void> _processCameraImage(CameraImage image) async {
+    if (_isProcessingFaceFrame || !mounted) {
+      return;
+    }
+    final now = DateTime.now();
+    if (now.difference(_lastFaceFrameStartedAt).inMilliseconds < 70) {
+      return;
+    }
+
+    final detector = _faceDetector;
+    final controller = _cameraController;
+    final rotationDegrees = controller == null
+        ? null
+        : _rotationCompensationDegrees(controller);
+    if (detector == null || controller == null || rotationDegrees == null) {
+      return;
+    }
+
+    _isProcessingFaceFrame = true;
+    _lastFaceFrameStartedAt = now;
+    try {
+      final isFrontCamera =
+          controller.description.lensDirection == CameraLensDirection.front;
+      FaceDetectionResult? result;
+      if (Platform.isAndroid) {
+        final nv21Image = _FaceMeshCameraImageAdapter.toNv21(image);
+        if (nv21Image == null) {
+          return;
+        }
+        result = detector.processNv21(
+          nv21Image,
+          rotationDegrees: rotationDegrees,
+          mirrorHorizontal: isFrontCamera,
+        );
+      } else if (Platform.isIOS) {
+        final bgraImage = _FaceMeshCameraImageAdapter.toBgra(image);
+        if (bgraImage == null) {
+          return;
+        }
+        result = detector.process(
+          bgraImage,
+          rotationDegrees: rotationDegrees,
+          mirrorHorizontal: isFrontCamera,
+        );
+      }
+
+      final faceBounds = _faceBoundsFromDetection(result?.primaryDetection);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _trackedFaceBounds = _smoothFaceBounds(_trackedFaceBounds, faceBounds);
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _trackedFaceBounds = null;
+        });
+      }
+    } finally {
+      _isProcessingFaceFrame = false;
+    }
+  }
+
+  int? _rotationCompensationDegrees(CameraController controller) {
+    final deviceRotation =
+        _deviceOrientationDegrees[controller.value.deviceOrientation];
+    if (deviceRotation == null) {
+      return null;
+    }
+    final sensorOrientation = controller.description.sensorOrientation;
+    if (Platform.isAndroid) {
+      if (controller.description.lensDirection == CameraLensDirection.front) {
+        return (sensorOrientation + deviceRotation) % 360;
+      }
+      return (sensorOrientation - deviceRotation + 360) % 360;
+    }
+    if (Platform.isIOS) {
+      return deviceRotation;
+    }
+    return null;
+  }
+
+  Rect? _faceBoundsFromDetection(FaceDetection? detection) {
+    if (detection == null) {
+      return null;
+    }
+
+    return Rect.fromLTRB(
+      detection.left.clamp(0.0, 1.0),
+      detection.top.clamp(0.0, 1.0),
+      detection.right.clamp(0.0, 1.0),
+      detection.bottom.clamp(0.0, 1.0),
+    );
+  }
+
+  Rect? _smoothFaceBounds(Rect? previous, Rect? next) {
+    if (next == null) {
+      return null;
+    }
+    if (previous == null) {
+      return next;
+    }
+
+    const response = 0.62;
+    return Rect.fromLTRB(
+      _lerp(previous.left, next.left, response),
+      _lerp(previous.top, next.top, response),
+      _lerp(previous.right, next.right, response),
+      _lerp(previous.bottom, next.bottom, response),
+    );
+  }
+
+  double _lerp(double from, double to, double t) {
+    return from + (to - from) * t;
   }
 
   void _handleSessionChanged() {
@@ -100,6 +256,10 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   void dispose() {
     VolumeButtonService.instance.setEnabled(false);
     _volumeButtonSubscription?.cancel();
+    if (_isStreamingCameraImages == true) {
+      _cameraController?.stopImageStream();
+    }
+    _faceDetector?.close();
     _controller
       ..removeListener(_handleSessionChanged)
       ..dispose();
@@ -147,6 +307,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                             Positioned.fill(
                               child: _CharacterThemeOverlay(
                                 character: widget.character,
+                                faceBounds: _trackedFaceBounds,
                               ),
                             ),
                             Positioned.fill(
@@ -266,89 +427,134 @@ class _CameraGameScreenState extends State<CameraGameScreen>
 }
 
 class _CharacterThemeOverlay extends StatelessWidget {
-  const _CharacterThemeOverlay({required this.character});
+  const _CharacterThemeOverlay({
+    required this.character,
+    required this.faceBounds,
+  });
 
   final BrushingCharacter character;
+  final Rect? faceBounds;
 
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: switch (character) {
-        BrushingCharacter.fox => const _FoxThemeOverlay(),
-        BrushingCharacter.gator => const _GatorThemeOverlay(),
+        BrushingCharacter.fox => _FoxThemeOverlay(faceBounds: faceBounds),
+        BrushingCharacter.gator => _GatorThemeOverlay(faceBounds: faceBounds),
       },
     );
   }
 }
 
 class _FoxThemeOverlay extends StatelessWidget {
-  const _FoxThemeOverlay();
+  const _FoxThemeOverlay({required this.faceBounds});
+
+  final Rect? faceBounds;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const Positioned(
-          top: 36,
-          left: 28,
-          child: _FoxEarDecoration(flip: false),
-        ),
-        const Positioned(
-          top: 36,
-          right: 28,
-          child: _FoxEarDecoration(flip: true),
-        ),
-        Positioned(
-          left: 18,
-          top: 136,
-          child: _GlowOrb(
-            size: 68,
-            color: const Color(0xFFF28B50).withValues(alpha: 0.22),
-          ),
-        ),
-        Positioned(
-          right: 14,
-          top: 184,
-          child: _GlowOrb(
-            size: 54,
-            color: const Color(0xFFFFC37A).withValues(alpha: 0.22),
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final face = faceBounds;
+        const earWidth = 74.0;
+        const earHeight = 88.0;
+        final faceWidth = face == null
+            ? constraints.maxWidth * 0.54
+            : face.width * constraints.maxWidth;
+        final faceHeight = face == null
+            ? constraints.maxHeight * 0.34
+            : face.height * constraints.maxHeight;
+        final headCenterX = face == null
+            ? constraints.maxWidth * 0.5
+            : face.center.dx * constraints.maxWidth;
+        final headTop = face == null
+            ? constraints.maxHeight * 0.18
+            : (face.top * constraints.maxHeight - faceHeight * 0.82);
+        final earGap = (faceWidth * 0.92).clamp(154.0, 320.0);
+        final earTop = (headTop - earHeight * 1.02).clamp(
+          8.0,
+          constraints.maxHeight - earHeight,
+        );
+        final leftEarLeft = (headCenterX - earGap / 2 - earWidth * 0.5).clamp(
+          8.0,
+          constraints.maxWidth - earWidth - 8,
+        );
+        final rightEarRight =
+            (constraints.maxWidth - (headCenterX + earGap / 2 + earWidth * 0.5))
+                .clamp(8.0, constraints.maxWidth - earWidth - 8);
+
+        return Stack(
+          children: [
+            Positioned(
+              top: earTop,
+              left: leftEarLeft,
+              child: const _FoxEarDecoration(flip: false),
+            ),
+            Positioned(
+              top: earTop,
+              right: rightEarRight,
+              child: const _FoxEarDecoration(flip: true),
+            ),
+            _EarPlacementGuides(
+              color: const Color(0xFFF28B50).withValues(alpha: 0.16),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
 class _GatorThemeOverlay extends StatelessWidget {
-  const _GatorThemeOverlay();
+  const _GatorThemeOverlay({required this.faceBounds});
+
+  final Rect? faceBounds;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const Positioned(
-          top: 24,
-          left: 18,
-          right: 18,
-          child: _GatorBrowDecoration(),
-        ),
-        Positioned(
-          left: 22,
-          top: 146,
-          child: _GlowOrb(
-            size: 54,
-            color: const Color(0xFF43B49D).withValues(alpha: 0.18),
-          ),
-        ),
-        Positioned(
-          right: 22,
-          top: 162,
-          child: _GlowOrb(
-            size: 46,
-            color: const Color(0xFF7AD9C5).withValues(alpha: 0.18),
-          ),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final face = faceBounds;
+        final faceWidth = face == null
+            ? constraints.maxWidth * 0.54
+            : face.width * constraints.maxWidth;
+        final faceHeight = face == null
+            ? constraints.maxHeight * 0.34
+            : face.height * constraints.maxHeight;
+        final headCenterX = face == null
+            ? constraints.maxWidth * 0.5
+            : face.center.dx * constraints.maxWidth;
+        final headTop = face == null
+            ? constraints.maxHeight * 0.18
+            : (face.top * constraints.maxHeight - faceHeight * 0.82);
+        final browWidth = face == null
+            ? constraints.maxWidth - 36
+            : (faceWidth * 1.78).clamp(250.0, constraints.maxWidth - 16);
+        final browHeight = browWidth / 3.4;
+        final browLeft = face == null
+            ? 18.0
+            : (headCenterX - browWidth / 2).clamp(
+                18.0,
+                constraints.maxWidth - browWidth - 18,
+              );
+        final browTop = face == null
+            ? 24.0
+            : headTop.clamp(8.0, constraints.maxHeight - browHeight);
+
+        return Stack(
+          children: [
+            Positioned(
+              top: browTop,
+              left: browLeft,
+              width: browWidth,
+              child: const _GatorBrowDecoration(),
+            ),
+            _EarPlacementGuides(
+              color: const Color(0xFF43B49D).withValues(alpha: 0.16),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -681,18 +887,56 @@ class _GatorBrowPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.size, required this.color});
+class _EarPlacementGuides extends StatelessWidget {
+  const _EarPlacementGuides({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final guideSize = (constraints.maxWidth * 0.17).clamp(48.0, 76.0);
+        final top = constraints.maxHeight * 0.26;
+        final side = constraints.maxWidth * 0.16;
+
+        return Stack(
+          children: [
+            Positioned(
+              left: side.clamp(0.0, constraints.maxWidth - guideSize),
+              top: top.clamp(0.0, constraints.maxHeight - guideSize),
+              child: _EarPlacementCircle(size: guideSize, color: color),
+            ),
+            Positioned(
+              right: side.clamp(0.0, constraints.maxWidth - guideSize),
+              top: top.clamp(0.0, constraints.maxHeight - guideSize),
+              child: _EarPlacementCircle(size: guideSize, color: color),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _EarPlacementCircle extends StatelessWidget {
+  const _EarPlacementCircle({required this.size, required this.color});
 
   final double size;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.26),
+          width: 2,
+        ),
+      ),
+      child: SizedBox.square(dimension: size),
     );
   }
 }
@@ -940,5 +1184,149 @@ class _FallbackCameraBackground extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _FaceMeshCameraImageAdapter {
+  const _FaceMeshCameraImageAdapter._();
+
+  static FaceMeshNv21Image? toNv21(CameraImage image) {
+    final planes = image.planes;
+    if (planes.isEmpty || image.width.isOdd || image.height.isOdd) {
+      return null;
+    }
+    if (planes.length == 1) {
+      return _fromSinglePlaneNv21(image);
+    }
+    if (planes.length == 2) {
+      return _fromYAndInterleavedVuPlanes(image);
+    }
+    if (planes.length >= 3) {
+      return _fromYuv420Planes(image);
+    }
+    return null;
+  }
+
+  static FaceMeshImage? toBgra(CameraImage image) {
+    final planes = image.planes;
+    if (planes.isEmpty) {
+      return null;
+    }
+    final plane = planes.first;
+    return FaceMeshImage(
+      pixels: plane.bytes,
+      width: image.width,
+      height: image.height,
+      bytesPerRow: plane.bytesPerRow,
+      pixelFormat: FaceMeshPixelFormat.bgra,
+    );
+  }
+
+  static FaceMeshNv21Image? _fromSinglePlaneNv21(CameraImage image) {
+    final plane = image.planes.first;
+    final rowStride = plane.bytesPerRow;
+    final ySize = rowStride * image.height;
+    final vuSize = rowStride * (image.height ~/ 2);
+    if (plane.bytes.length < ySize + vuSize) {
+      return null;
+    }
+    return FaceMeshNv21Image(
+      yPlane: Uint8List.sublistView(plane.bytes, 0, ySize),
+      vuPlane: Uint8List.sublistView(plane.bytes, ySize, ySize + vuSize),
+      width: image.width,
+      height: image.height,
+      yBytesPerRow: rowStride,
+      vuBytesPerRow: rowStride,
+    );
+  }
+
+  static FaceMeshNv21Image? _fromYAndInterleavedVuPlanes(CameraImage image) {
+    final yPlane = _copyPlane(
+      image.planes[0],
+      width: image.width,
+      height: image.height,
+    );
+    final vuPlane = _copyPlane(
+      image.planes[1],
+      width: image.width,
+      height: image.height ~/ 2,
+    );
+    if (yPlane == null || vuPlane == null) {
+      return null;
+    }
+    return FaceMeshNv21Image(
+      yPlane: yPlane,
+      vuPlane: vuPlane,
+      width: image.width,
+      height: image.height,
+      yBytesPerRow: image.width,
+      vuBytesPerRow: image.width,
+    );
+  }
+
+  static FaceMeshNv21Image? _fromYuv420Planes(CameraImage image) {
+    final yPlane = _copyPlane(
+      image.planes[0],
+      width: image.width,
+      height: image.height,
+    );
+    if (yPlane == null) {
+      return null;
+    }
+
+    final uPlane = image.planes[1];
+    final vPlane = image.planes[2];
+    final uvWidth = image.width ~/ 2;
+    final uvHeight = image.height ~/ 2;
+    final vuPlane = Uint8List(image.width * uvHeight);
+
+    for (var row = 0; row < uvHeight; row++) {
+      for (var col = 0; col < uvWidth; col++) {
+        final u = _readPlaneByte(uPlane, row, col);
+        final v = _readPlaneByte(vPlane, row, col);
+        if (u == null || v == null) {
+          return null;
+        }
+        final out = row * image.width + col * 2;
+        vuPlane[out] = v;
+        vuPlane[out + 1] = u;
+      }
+    }
+
+    return FaceMeshNv21Image(
+      yPlane: yPlane,
+      vuPlane: vuPlane,
+      width: image.width,
+      height: image.height,
+      yBytesPerRow: image.width,
+      vuBytesPerRow: image.width,
+    );
+  }
+
+  static Uint8List? _copyPlane(
+    Plane plane, {
+    required int width,
+    required int height,
+  }) {
+    final out = Uint8List(width * height);
+    for (var row = 0; row < height; row++) {
+      for (var col = 0; col < width; col++) {
+        final value = _readPlaneByte(plane, row, col);
+        if (value == null) {
+          return null;
+        }
+        out[row * width + col] = value;
+      }
+    }
+    return out;
+  }
+
+  static int? _readPlaneByte(Plane plane, int row, int col) {
+    final pixelStride = plane.bytesPerPixel ?? 1;
+    final index = row * plane.bytesPerRow + col * pixelStride;
+    if (index < 0 || index >= plane.bytes.length) {
+      return null;
+    }
+    return plane.bytes[index];
   }
 }
