@@ -1,21 +1,27 @@
+import 'dart:async';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/brushing_session_controller.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n.dart';
+import '../models/app_settings.dart';
 import '../models/brushing_zone.dart';
 import '../models/character.dart';
+import '../services/volume_button_service.dart';
 
 class CameraGameScreen extends StatefulWidget {
   const CameraGameScreen({
     super.key,
     required this.character,
     required this.availableCameras,
+    required this.settings,
   });
 
   final BrushingCharacter character;
   final List<CameraDescription> availableCameras;
+  final AppSettings settings;
 
   @override
   State<CameraGameScreen> createState() => _CameraGameScreenState();
@@ -25,14 +31,19 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     with SingleTickerProviderStateMixin {
   late final BrushingSessionController _controller;
   late final AnimationController _characterAnimation;
+  StreamSubscription<void>? _volumeButtonSubscription;
   CameraController? _cameraController;
   Future<void>? _cameraFuture;
 
   @override
   void initState() {
     super.initState();
-    _controller = BrushingSessionController()..start();
+    _controller = BrushingSessionController(
+      brushingDurationSeconds: widget.settings.brushingDurationSeconds,
+      zoneOrder: widget.settings.zoneOrder,
+    )..start();
     _controller.addListener(_handleSessionChanged);
+    _configureVolumePause();
     _characterAnimation = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -40,6 +51,20 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       upperBound: 1.05,
     )..repeat(reverse: true);
     _initializePlainCamera();
+  }
+
+  void _configureVolumePause() {
+    final volumePauseEnabled =
+        widget.settings.allowsVolumePause && !widget.settings.pauseLockEnabled;
+    VolumeButtonService.instance.setEnabled(volumePauseEnabled);
+    if (!volumePauseEnabled) {
+      return;
+    }
+    _volumeButtonSubscription = VolumeButtonService.instance.presses.listen((
+      _,
+    ) {
+      _controller.togglePause();
+    });
   }
 
   Future<void> _initializePlainCamera() async {
@@ -73,6 +98,8 @@ class _CameraGameScreenState extends State<CameraGameScreen>
 
   @override
   void dispose() {
+    VolumeButtonService.instance.setEnabled(false);
+    _volumeButtonSubscription?.cancel();
     _controller
       ..removeListener(_handleSessionChanged)
       ..dispose();
@@ -84,85 +111,102 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(child: _buildPlainCameraLayer(context)),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withValues(alpha: 0.08),
-                    Colors.transparent,
-                    _themeColor.withValues(alpha: 0.08),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _screenPauseEnabled ? _controller.togglePause : null,
+        onLongPress: _screenPauseLocked ? _controller.togglePause : null,
+        child: Stack(
+          children: [
+            Positioned.fill(child: _buildPlainCameraLayer(context)),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withValues(alpha: 0.08),
+                      Colors.transparent,
+                      _themeColor.withValues(alpha: 0.08),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
                 ),
               ),
             ),
-          ),
-          Positioned.fill(
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _SessionHeader(controller: _controller),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: _CharacterThemeOverlay(
-                              character: widget.character,
+            Positioned.fill(
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      _SessionHeader(controller: _controller),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: _CharacterThemeOverlay(
+                                character: widget.character,
+                              ),
                             ),
-                          ),
-                          Positioned.fill(
-                            child: _BrushingGuideOverlay(
-                              zone: _controller.currentZone,
-                              remainingPlaque: _controller.remainingPlaque,
-                              color: _themeColor,
+                            Positioned.fill(
+                              child: _BrushingGuideOverlay(
+                                zone: _controller.currentZone,
+                                remainingPlaque: _controller.remainingPlaque,
+                                color: _themeColor,
+                              ),
                             ),
-                          ),
-                          Align(
-                            alignment: Alignment.bottomRight,
-                            child: _CharacterReaction(
-                              animation: _characterAnimation,
-                              character: widget.character,
-                              encouragement: _encouragement(context.l10n),
+                            if (_controller.isPaused)
+                              Positioned.fill(
+                                child: _PausedOverlay(
+                                  locked: widget.settings.pauseLockEnabled,
+                                ),
+                              ),
+                            Align(
+                              alignment: Alignment.bottomRight,
+                              child: _CharacterReaction(
+                                animation: _characterAnimation,
+                                character: widget.character,
+                                encouragement: _encouragement(context.l10n),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_controller.canAddParentTime)
-                      FilledButton(
-                        onPressed: _controller.addParentTime,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF2C2A4A),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 28,
-                            vertical: 16,
-                          ),
+                          ],
                         ),
-                        child: Text(context.l10n.plusThirtySeconds),
                       ),
-                    if (_controller.phase == SessionPhase.done)
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: Text(context.l10n.backToCharacters),
-                      ),
-                  ],
+                      const SizedBox(height: 12),
+                      if (_controller.canAddParentTime)
+                        FilledButton(
+                          onPressed: _controller.addParentTime,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF2C2A4A),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 28,
+                              vertical: 16,
+                            ),
+                          ),
+                          child: Text(context.l10n.plusThirtySeconds),
+                        ),
+                      if (_controller.phase == SessionPhase.done)
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(context.l10n.backToCharacters),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  bool get _screenPauseEnabled =>
+      widget.settings.allowsScreenPause && !widget.settings.pauseLockEnabled;
+
+  bool get _screenPauseLocked =>
+      widget.settings.allowsScreenPause && widget.settings.pauseLockEnabled;
 
   Color get _themeColor => switch (widget.character) {
     BrushingCharacter.fox => const Color(0xFFF28B50),
@@ -210,6 +254,9 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     }
     if (_controller.phase == SessionPhase.done) {
       return l10n.greatJob;
+    }
+    if (_controller.isPaused) {
+      return l10n.paused;
     }
     if (_controller.remainingPlaque <= 2) {
       return l10n.almostDone;
@@ -650,6 +697,59 @@ class _GlowOrb extends StatelessWidget {
   }
 }
 
+class _PausedOverlay extends StatelessWidget {
+  const _PausedOverlay({required this.locked});
+
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.26)),
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.pause_circle_filled_rounded,
+                  size: 44,
+                  color: Color(0xFF2C2A4A),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.paused,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF2C2A4A),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  locked ? l10n.longPressToResume : l10n.tapToResume,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF5D5A88),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SessionHeader extends StatelessWidget {
   const _SessionHeader({required this.controller});
 
@@ -739,9 +839,8 @@ class _SessionHeader extends StatelessWidget {
   double _progressValue() {
     return switch (controller.phase) {
       SessionPhase.brushing =>
-        (BrushingSessionController.baseDurationSeconds -
-                controller.secondsRemaining) /
-            BrushingSessionController.baseDurationSeconds,
+        (controller.brushingDurationSeconds - controller.secondsRemaining) /
+            controller.brushingDurationSeconds,
       SessionPhase.waitingForParent => 1,
       SessionPhase.parentExtension =>
         1 -

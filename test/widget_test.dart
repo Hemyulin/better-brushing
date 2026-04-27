@@ -1,12 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:better_brushing/app.dart';
+import 'package:better_brushing/controllers/app_settings_controller.dart';
 
 void main() {
   testWidgets('shows character selection and starts the flow', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(const BrushingApp(availableCameras: []));
+    await tester.pumpWidget(
+      BrushingApp(
+        availableCameras: const [],
+        settingsController: AppSettingsController(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Choose your character'), findsOneWidget);

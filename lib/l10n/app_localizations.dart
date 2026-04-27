@@ -283,6 +283,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clean the {zone} side.'**
   String cleanZoneInstruction(String zone);
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @timerSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Timer'**
+  String get timerSettingsTitle;
+
+  /// No description provided for @brushingDurationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} minutes'**
+  String brushingDurationMinutes(String minutes);
+
+  /// No description provided for @languageSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageSettingsTitle;
+
+  /// No description provided for @languageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get languageSystem;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languageGerman.
+  ///
+  /// In en, this message translates to:
+  /// **'German'**
+  String get languageGerman;
+
+  /// No description provided for @pauseSettingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get pauseSettingsTitle;
+
+  /// No description provided for @pauseControlLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause with'**
+  String get pauseControlLabel;
+
+  /// No description provided for @pauseByScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen'**
+  String get pauseByScreen;
+
+  /// No description provided for @pauseByVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get pauseByVolume;
+
+  /// No description provided for @pauseByBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Both'**
+  String get pauseByBoth;
+
+  /// No description provided for @pauseLockTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock pausing'**
+  String get pauseLockTitle;
+
+  /// No description provided for @pauseLockDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen pauses need a long press, and volume buttons are disabled.'**
+  String get pauseLockDescription;
+
+  /// No description provided for @paused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get paused;
+
+  /// No description provided for @tapToResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to resume'**
+  String get tapToResume;
+
+  /// No description provided for @longPressToResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press to resume'**
+  String get longPressToResume;
+
+  /// No description provided for @zoneSequenceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Side order'**
+  String get zoneSequenceTitle;
+
+  /// No description provided for @zoneSequenceCurrentOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Current order'**
+  String get zoneSequenceCurrentOrder;
+
+  /// No description provided for @zoneSequencePatternLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pattern'**
+  String get zoneSequencePatternLabel;
+
+  /// No description provided for @zoneSequenceStartLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start at'**
+  String get zoneSequenceStartLabel;
+
+  /// No description provided for @zoneSequenceClockwise.
+  ///
+  /// In en, this message translates to:
+  /// **'Clockwise'**
+  String get zoneSequenceClockwise;
+
+  /// No description provided for @zoneSequenceCounterClockwise.
+  ///
+  /// In en, this message translates to:
+  /// **'Counter-clockwise'**
+  String get zoneSequenceCounterClockwise;
+
+  /// No description provided for @zoneSequenceZFormation.
+  ///
+  /// In en, this message translates to:
+  /// **'Z formation'**
+  String get zoneSequenceZFormation;
+
+  /// No description provided for @zoneSequenceClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get zoneSequenceClear;
+
+  /// No description provided for @zoneSequenceReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get zoneSequenceReset;
 }
 
 class _AppLocalizationsDelegate

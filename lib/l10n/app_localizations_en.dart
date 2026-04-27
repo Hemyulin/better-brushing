@@ -110,4 +110,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String cleanZoneInstruction(String zone) {
     return 'Clean the $zone side.';
   }
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get timerSettingsTitle => 'Timer';
+
+  @override
+  String brushingDurationMinutes(String minutes) {
+    return '$minutes minutes';
+  }
+
+  @override
+  String get languageSettingsTitle => 'Language';
+
+  @override
+  String get languageSystem => 'System';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languageGerman => 'German';
+
+  @override
+  String get pauseSettingsTitle => 'Pause';
+
+  @override
+  String get pauseControlLabel => 'Pause with';
+
+  @override
+  String get pauseByScreen => 'Screen';
+
+  @override
+  String get pauseByVolume => 'Volume';
+
+  @override
+  String get pauseByBoth => 'Both';
+
+  @override
+  String get pauseLockTitle => 'Lock pausing';
+
+  @override
+  String get pauseLockDescription =>
+      'Screen pauses need a long press, and volume buttons are disabled.';
+
+  @override
+  String get paused => 'Paused';
+
+  @override
+  String get tapToResume => 'Tap to resume';
+
+  @override
+  String get longPressToResume => 'Long press to resume';
+
+  @override
+  String get zoneSequenceTitle => 'Side order';
+
+  @override
+  String get zoneSequenceCurrentOrder => 'Current order';
+
+  @override
+  String get zoneSequencePatternLabel => 'Pattern';
+
+  @override
+  String get zoneSequenceStartLabel => 'Start at';
+
+  @override
+  String get zoneSequenceClockwise => 'Clockwise';
+
+  @override
+  String get zoneSequenceCounterClockwise => 'Counter-clockwise';
+
+  @override
+  String get zoneSequenceZFormation => 'Z formation';
+
+  @override
+  String get zoneSequenceClear => 'Clear';
+
+  @override
+  String get zoneSequenceReset => 'Reset';
 }

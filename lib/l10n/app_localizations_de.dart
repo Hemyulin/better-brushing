@@ -22,7 +22,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get foxName => 'Fuchs';
 
   @override
-  String get gatorName => 'Alligator';
+  String get gatorName => 'Krokodil';
 
   @override
   String get foxDescription =>
@@ -110,4 +110,85 @@ class AppLocalizationsDe extends AppLocalizations {
   String cleanZoneInstruction(String zone) {
     return 'Putze die Seite $zone.';
   }
+
+  @override
+  String get settingsTitle => 'Einstellungen';
+
+  @override
+  String get timerSettingsTitle => 'Timer';
+
+  @override
+  String brushingDurationMinutes(String minutes) {
+    return '$minutes Minuten';
+  }
+
+  @override
+  String get languageSettingsTitle => 'Sprache';
+
+  @override
+  String get languageSystem => 'System';
+
+  @override
+  String get languageEnglish => 'Englisch';
+
+  @override
+  String get languageGerman => 'Deutsch';
+
+  @override
+  String get pauseSettingsTitle => 'Pause';
+
+  @override
+  String get pauseControlLabel => 'Pausieren mit';
+
+  @override
+  String get pauseByScreen => 'Display';
+
+  @override
+  String get pauseByVolume => 'Lautstärke';
+
+  @override
+  String get pauseByBoth => 'Beides';
+
+  @override
+  String get pauseLockTitle => 'Pausieren sperren';
+
+  @override
+  String get pauseLockDescription =>
+      'Pausieren per Display braucht langes Drücken, Lautstärketasten sind aus.';
+
+  @override
+  String get paused => 'Pausiert';
+
+  @override
+  String get tapToResume => 'Tippen zum Fortsetzen';
+
+  @override
+  String get longPressToResume => 'Lange drücken zum Fortsetzen';
+
+  @override
+  String get zoneSequenceTitle => 'Reihenfolge der Seiten';
+
+  @override
+  String get zoneSequenceCurrentOrder => 'Aktuelle Reihenfolge';
+
+  @override
+  String get zoneSequencePatternLabel => 'Muster';
+
+  @override
+  String get zoneSequenceStartLabel => 'Start bei';
+
+  @override
+  String get zoneSequenceClockwise => 'Im Uhrzeigersinn';
+
+  @override
+  String get zoneSequenceCounterClockwise => 'Gegen den Uhrzeigersinn';
+
+  @override
+  String get zoneSequenceZFormation => 'Z-Form';
+
+  @override
+  String get zoneSequenceClear => 'Leeren';
+
+  @override
+  String get zoneSequenceReset => 'Zurücksetzen';
 }

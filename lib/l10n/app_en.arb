@@ -37,5 +37,38 @@
         "type": "String"
       }
     }
-  }
+  },
+  "settingsTitle": "Settings",
+  "timerSettingsTitle": "Timer",
+  "brushingDurationMinutes": "{minutes} minutes",
+  "@brushingDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "languageSettingsTitle": "Language",
+  "languageSystem": "System",
+  "languageEnglish": "English",
+  "languageGerman": "German",
+  "pauseSettingsTitle": "Pause",
+  "pauseControlLabel": "Pause with",
+  "pauseByScreen": "Screen",
+  "pauseByVolume": "Volume",
+  "pauseByBoth": "Both",
+  "pauseLockTitle": "Lock pausing",
+  "pauseLockDescription": "Screen pauses need a long press, and volume buttons are disabled.",
+  "paused": "Paused",
+  "tapToResume": "Tap to resume",
+  "longPressToResume": "Long press to resume",
+  "zoneSequenceTitle": "Side order",
+  "zoneSequenceCurrentOrder": "Current order",
+  "zoneSequencePatternLabel": "Pattern",
+  "zoneSequenceStartLabel": "Start at",
+  "zoneSequenceClockwise": "Clockwise",
+  "zoneSequenceCounterClockwise": "Counter-clockwise",
+  "zoneSequenceZFormation": "Z formation",
+  "zoneSequenceClear": "Clear",
+  "zoneSequenceReset": "Reset"
 }

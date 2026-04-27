@@ -1,15 +1,22 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
+import '../controllers/app_settings_controller.dart';
 import '../l10n/l10n.dart';
 import '../models/character.dart';
 import '../widgets/character_card.dart';
 import 'camera_game_screen.dart';
+import 'settings_screen.dart';
 
 class CharacterSelectionScreen extends StatelessWidget {
-  const CharacterSelectionScreen({super.key, required this.availableCameras});
+  const CharacterSelectionScreen({
+    super.key,
+    required this.availableCameras,
+    required this.settingsController,
+  });
 
   final List<CameraDescription> availableCameras;
+  final AppSettingsController settingsController;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +41,15 @@ class CharacterSelectionScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton.filledTonal(
+                        tooltip: l10n.settingsTitle,
+                        onPressed: () => _openSettings(context),
+                        icon: const Icon(Icons.settings_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       l10n.chooseYourCharacter,
                       textAlign: TextAlign.center,
@@ -80,7 +96,16 @@ class CharacterSelectionScreen extends StatelessWidget {
         builder: (_) => CameraGameScreen(
           character: character,
           availableCameras: availableCameras,
+          settings: settingsController.settings,
         ),
+      ),
+    );
+  }
+
+  void _openSettings(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingsScreen(settingsController: settingsController),
       ),
     );
   }

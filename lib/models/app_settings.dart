@@ -1,0 +1,177 @@
+import 'package:flutter/widgets.dart';
+
+import 'brushing_zone.dart';
+
+enum AppLanguage { system, english, german }
+
+enum PauseControl { screen, volumeButtons, screenAndVolumeButtons }
+
+class AppSettings {
+  const AppSettings({
+    this.brushingDurationSeconds = 120,
+    this.language = AppLanguage.system,
+    this.pauseControl = PauseControl.screen,
+    this.pauseLockEnabled = false,
+    this.zoneOrder = defaultZoneOrder,
+  });
+
+  static const defaultZoneOrder = [
+    BrushingZone.topLeft,
+    BrushingZone.topRight,
+    BrushingZone.bottomLeft,
+    BrushingZone.bottomRight,
+  ];
+
+  final int brushingDurationSeconds;
+  final AppLanguage language;
+  final PauseControl pauseControl;
+  final bool pauseLockEnabled;
+  final List<BrushingZone> zoneOrder;
+
+  static const minDurationSeconds = 60;
+  static const maxDurationSeconds = 300;
+  static const durationStepSeconds = 30;
+
+  Locale? get locale => switch (language) {
+    AppLanguage.system => null,
+    AppLanguage.english => const Locale('en'),
+    AppLanguage.german => const Locale('de'),
+  };
+
+  bool get allowsScreenPause =>
+      pauseControl == PauseControl.screen ||
+      pauseControl == PauseControl.screenAndVolumeButtons;
+
+  bool get allowsVolumePause =>
+      pauseControl == PauseControl.volumeButtons ||
+      pauseControl == PauseControl.screenAndVolumeButtons;
+
+  AppSettings copyWith({
+    int? brushingDurationSeconds,
+    AppLanguage? language,
+    PauseControl? pauseControl,
+    bool? pauseLockEnabled,
+    List<BrushingZone>? zoneOrder,
+  }) {
+    return AppSettings(
+      brushingDurationSeconds:
+          brushingDurationSeconds ?? this.brushingDurationSeconds,
+      language: language ?? this.language,
+      pauseControl: pauseControl ?? this.pauseControl,
+      pauseLockEnabled: pauseLockEnabled ?? this.pauseLockEnabled,
+      zoneOrder: zoneOrder ?? this.zoneOrder,
+    );
+  }
+
+  Map<String, Object> toJson() {
+    return <String, Object>{
+      'brushingDurationSeconds': brushingDurationSeconds,
+      'language': language.name,
+      'pauseControl': pauseControl.name,
+      'pauseLockEnabled': pauseLockEnabled,
+      'zoneOrder': zoneOrder.map((zone) => zone.name).toList(),
+    };
+  }
+
+  factory AppSettings.fromJson(Map<String, Object?> json) {
+    return AppSettings(
+      brushingDurationSeconds: _readDuration(json['brushingDurationSeconds']),
+      language: _readEnum(
+        AppLanguage.values,
+        json['language'],
+        AppLanguage.system,
+      ),
+      pauseControl: _readEnum(
+        PauseControl.values,
+        json['pauseControl'],
+        PauseControl.screen,
+      ),
+      pauseLockEnabled: json['pauseLockEnabled'] == true,
+      zoneOrder: _readZoneOrder(json),
+    );
+  }
+
+  static int _readDuration(Object? value) {
+    final duration = value is num ? value.round() : 120;
+    return duration.clamp(minDurationSeconds, maxDurationSeconds);
+  }
+
+  static T _readEnum<T extends Enum>(
+    List<T> values,
+    Object? value,
+    T fallback,
+  ) {
+    if (value is! String) {
+      return fallback;
+    }
+    for (final enumValue in values) {
+      if (enumValue.name == value) {
+        return enumValue;
+      }
+    }
+    return fallback;
+  }
+
+  static List<BrushingZone> _readZoneOrder(Map<String, Object?> json) {
+    final savedOrder = json['zoneOrder'];
+    if (savedOrder is List) {
+      final zones = <BrushingZone>[];
+      for (final value in savedOrder) {
+        final zone = _readEnum(
+          BrushingZone.values,
+          value,
+          BrushingZone.topLeft,
+        );
+        if (!zones.contains(zone)) {
+          zones.add(zone);
+        }
+      }
+      return _completeZoneOrder(zones);
+    }
+
+    return _legacyZoneOrder(json);
+  }
+
+  static List<BrushingZone> _legacyZoneOrder(Map<String, Object?> json) {
+    final pattern = _readEnum(
+      _LegacyZoneSequencePattern.values,
+      json['zoneSequencePattern'],
+      _LegacyZoneSequencePattern.zFormation,
+    );
+    final start = _readEnum(
+      BrushingZone.values,
+      json['zoneSequenceStart'],
+      BrushingZone.topLeft,
+    );
+    final baseOrder = switch (pattern) {
+      _LegacyZoneSequencePattern.clockwise => const [
+        BrushingZone.topLeft,
+        BrushingZone.topRight,
+        BrushingZone.bottomRight,
+        BrushingZone.bottomLeft,
+      ],
+      _LegacyZoneSequencePattern.counterClockwise => const [
+        BrushingZone.topLeft,
+        BrushingZone.bottomLeft,
+        BrushingZone.bottomRight,
+        BrushingZone.topRight,
+      ],
+      _LegacyZoneSequencePattern.zFormation => defaultZoneOrder,
+    };
+    final startIndex = baseOrder.indexOf(start);
+    return <BrushingZone>[
+      ...baseOrder.skip(startIndex),
+      ...baseOrder.take(startIndex),
+    ];
+  }
+
+  static List<BrushingZone> _completeZoneOrder(List<BrushingZone> zones) {
+    return <BrushingZone>[
+      ...zones,
+      for (final zone in defaultZoneOrder)
+        if (!zones.contains(zone)) zone,
+    ];
+  }
+}
+
+enum _LegacyZoneSequencePattern { clockwise, counterClockwise, zFormation }

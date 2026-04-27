@@ -2,13 +2,45 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'controllers/app_settings_controller.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/character_selection_screen.dart';
 
-class BrushingApp extends StatelessWidget {
-  const BrushingApp({super.key, required this.availableCameras});
+class BrushingApp extends StatefulWidget {
+  const BrushingApp({
+    super.key,
+    required this.availableCameras,
+    this.settingsController,
+  });
 
   final List<CameraDescription> availableCameras;
+  final AppSettingsController? settingsController;
+
+  @override
+  State<BrushingApp> createState() => _BrushingAppState();
+}
+
+class _BrushingAppState extends State<BrushingApp> {
+  late final AppSettingsController _settingsController;
+  late final bool _ownsSettingsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsSettingsController = widget.settingsController == null;
+    _settingsController = widget.settingsController ?? AppSettingsController();
+    if (_ownsSettingsController) {
+      _settingsController.load();
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_ownsSettingsController) {
+      _settingsController.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,18 +64,25 @@ class BrushingApp extends StatelessWidget {
       ),
     );
 
-    return MaterialApp(
-      title: 'Brush Buddies',
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-      supportedLocales: AppLocalizations.supportedLocales,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: CharacterSelectionScreen(availableCameras: availableCameras),
+    return AnimatedBuilder(
+      animation: _settingsController,
+      builder: (context, _) => MaterialApp(
+        title: 'Brush Buddies',
+        debugShowCheckedModeBanner: false,
+        theme: theme,
+        locale: _settingsController.settings.locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: CharacterSelectionScreen(
+          availableCameras: widget.availableCameras,
+          settingsController: _settingsController,
+        ),
+      ),
     );
   }
 }

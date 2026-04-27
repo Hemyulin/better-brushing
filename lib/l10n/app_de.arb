@@ -4,7 +4,7 @@
   "chooseYourCharacter": "Wähle deine Figur",
   "characterSelectionSubtitle": "Such dir einen Putzfreund aus und starte ruhig in zwei Zahnputz-Minuten.",
   "foxName": "Fuchs",
-  "gatorName": "Alligator",
+  "gatorName": "Krokodil",
   "foxDescription": "Fröhlich, freundlich und bereit, Essensreste wegzuwischen.",
   "gatorDescription": "Ruhig, stark und bei jeder Seite mit dabei.",
   "letsCleanThisSide": "Lass uns diese Seite putzen!",
@@ -37,5 +37,38 @@
         "type": "String"
       }
     }
-  }
+  },
+  "settingsTitle": "Einstellungen",
+  "timerSettingsTitle": "Timer",
+  "brushingDurationMinutes": "{minutes} Minuten",
+  "@brushingDurationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "languageSettingsTitle": "Sprache",
+  "languageSystem": "System",
+  "languageEnglish": "Englisch",
+  "languageGerman": "Deutsch",
+  "pauseSettingsTitle": "Pause",
+  "pauseControlLabel": "Pausieren mit",
+  "pauseByScreen": "Display",
+  "pauseByVolume": "Lautstärke",
+  "pauseByBoth": "Beides",
+  "pauseLockTitle": "Pausieren sperren",
+  "pauseLockDescription": "Pausieren per Display braucht langes Drücken, Lautstärketasten sind aus.",
+  "paused": "Pausiert",
+  "tapToResume": "Tippen zum Fortsetzen",
+  "longPressToResume": "Lange drücken zum Fortsetzen",
+  "zoneSequenceTitle": "Reihenfolge der Seiten",
+  "zoneSequenceCurrentOrder": "Aktuelle Reihenfolge",
+  "zoneSequencePatternLabel": "Muster",
+  "zoneSequenceStartLabel": "Start bei",
+  "zoneSequenceClockwise": "Im Uhrzeigersinn",
+  "zoneSequenceCounterClockwise": "Gegen den Uhrzeigersinn",
+  "zoneSequenceZFormation": "Z-Form",
+  "zoneSequenceClear": "Leeren",
+  "zoneSequenceReset": "Zurücksetzen"
 }
