@@ -372,6 +372,13 @@ class _CharacterPlacementSettingsScreenState
     final rightSliders = _selectedCharacter == BrushingCharacter.fox
         ? [
             _EdgeSlider(
+              topLabel: l10n.placementFarther,
+              bottomLabel: l10n.placementCloser,
+              value: settings.foxEarSpacingOffset,
+              onChanged: (value) =>
+                  _update(settings.copyWith(foxEarSpacingOffset: value)),
+            ),
+            _EdgeSlider(
               topLabel: l10n.placementRight,
               bottomLabel: l10n.placementLeft,
               value: settings.trackingHorizontalOffset,
@@ -380,13 +387,6 @@ class _CharacterPlacementSettingsScreenState
             ),
           ]
         : [
-            _EdgeSlider(
-              topLabel: l10n.placementRight,
-              bottomLabel: l10n.placementLeft,
-              value: settings.gatorHorizontalOffset,
-              onChanged: (value) =>
-                  _update(settings.copyWith(gatorHorizontalOffset: value)),
-            ),
             _EdgeSlider(
               topLabel: l10n.placementRight,
               bottomLabel: l10n.placementLeft,
