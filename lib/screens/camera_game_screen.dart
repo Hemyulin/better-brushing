@@ -538,7 +538,11 @@ class _FoxThemeOverlay extends StatelessWidget {
         final headTop = face == null
             ? constraints.maxHeight * 0.18
             : (face.top * constraints.maxHeight - faceHeight * 0.82);
-        final maxEarGap = math.max(110.0, constraints.maxWidth - earWidth - 16);
+        final sideOverflow = earWidth * 0.95;
+        final maxEarGap = math.max(
+          110.0,
+          constraints.maxWidth - earWidth + sideOverflow,
+        );
         final earGap = (faceWidth * 0.92 + earSpacingOffset * 90).clamp(
           110.0,
           maxEarGap,
@@ -553,8 +557,8 @@ class _FoxThemeOverlay extends StatelessWidget {
             0.48;
         final groupWidth = earGap + earWidth;
         final clampedHeadCenterX = headCenterX.clamp(
-          groupWidth / 2 + 8,
-          constraints.maxWidth - groupWidth / 2 - 8,
+          groupWidth / 2 - sideOverflow,
+          constraints.maxWidth - groupWidth / 2 + sideOverflow,
         );
         final leftEarLeft = clampedHeadCenterX - earGap / 2 - earWidth * 0.5;
         final rightEarRight =

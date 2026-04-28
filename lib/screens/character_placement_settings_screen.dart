@@ -334,7 +334,6 @@ class _CharacterPlacementSettingsScreenState
     final leftSliders = _selectedCharacter == BrushingCharacter.fox
         ? [
             _EdgeSlider(
-              label: l10n.foxEarHeightLabel,
               topLabel: l10n.placementHigher,
               bottomLabel: l10n.placementLower,
               topIsMax: false,
@@ -343,7 +342,6 @@ class _CharacterPlacementSettingsScreenState
                   _update(settings.copyWith(foxEarHeightOffset: value)),
             ),
             _EdgeSlider(
-              label: l10n.trackingVerticalLabel,
               topLabel: l10n.placementHigher,
               bottomLabel: l10n.placementLower,
               topIsMax: false,
@@ -354,7 +352,6 @@ class _CharacterPlacementSettingsScreenState
           ]
         : [
             _EdgeSlider(
-              label: l10n.gatorVerticalLabel,
               topLabel: l10n.placementHigher,
               bottomLabel: l10n.placementLower,
               topIsMax: false,
@@ -363,7 +360,6 @@ class _CharacterPlacementSettingsScreenState
                   _update(settings.copyWith(gatorVerticalOffset: value)),
             ),
             _EdgeSlider(
-              label: l10n.trackingVerticalLabel,
               topLabel: l10n.placementHigher,
               bottomLabel: l10n.placementLower,
               topIsMax: false,
@@ -376,15 +372,6 @@ class _CharacterPlacementSettingsScreenState
     final rightSliders = _selectedCharacter == BrushingCharacter.fox
         ? [
             _EdgeSlider(
-              label: l10n.foxEarSpacingLabel,
-              topLabel: l10n.placementFarther,
-              bottomLabel: l10n.placementCloser,
-              value: settings.foxEarSpacingOffset,
-              onChanged: (value) =>
-                  _update(settings.copyWith(foxEarSpacingOffset: value)),
-            ),
-            _EdgeSlider(
-              label: l10n.trackingHorizontalLabel,
               topLabel: l10n.placementRight,
               bottomLabel: l10n.placementLeft,
               value: settings.trackingHorizontalOffset,
@@ -394,7 +381,6 @@ class _CharacterPlacementSettingsScreenState
           ]
         : [
             _EdgeSlider(
-              label: l10n.gatorHorizontalLabel,
               topLabel: l10n.placementRight,
               bottomLabel: l10n.placementLeft,
               value: settings.gatorHorizontalOffset,
@@ -402,7 +388,6 @@ class _CharacterPlacementSettingsScreenState
                   _update(settings.copyWith(gatorHorizontalOffset: value)),
             ),
             _EdgeSlider(
-              label: l10n.trackingHorizontalLabel,
               topLabel: l10n.placementRight,
               bottomLabel: l10n.placementLeft,
               value: settings.trackingHorizontalOffset,
@@ -482,13 +467,13 @@ class _SliderRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 92),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 92),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           for (final slider in sliders) ...[
             slider,
-            if (slider != sliders.last) const SizedBox(height: 12),
+            if (slider != sliders.last) const SizedBox(height: 8),
           ],
         ],
       ),
@@ -498,7 +483,6 @@ class _SliderRail extends StatelessWidget {
 
 class _EdgeSlider extends StatelessWidget {
   const _EdgeSlider({
-    required this.label,
     required this.topLabel,
     required this.bottomLabel,
     this.topIsMax = true,
@@ -506,7 +490,6 @@ class _EdgeSlider extends StatelessWidget {
     required this.onChanged,
   });
 
-  final String label;
   final String topLabel;
   final String bottomLabel;
   final bool topIsMax;
@@ -516,16 +499,16 @@ class _EdgeSlider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+      width: 46,
+      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.86),
-        borderRadius: BorderRadius.circular(18),
+        color: Colors.white.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x22000000),
-            blurRadius: 12,
-            offset: Offset(0, 5),
+            color: Color(0x1F000000),
+            blurRadius: 8,
+            offset: Offset(0, 3),
           ),
         ],
       ),
@@ -538,10 +521,10 @@ class _EdgeSlider extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: Theme.of(
               context,
-            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
+            ).textTheme.labelSmall?.copyWith(fontSize: 9),
           ),
           SizedBox(
-            height: 164,
+            height: 116,
             child: RotatedBox(
               quarterTurns: -1,
               child: Slider(
@@ -560,15 +543,7 @@ class _EdgeSlider extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: Theme.of(
               context,
-            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelSmall,
+            ).textTheme.labelSmall?.copyWith(fontSize: 9),
           ),
         ],
       ),
