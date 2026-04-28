@@ -446,6 +446,18 @@ abstract class AppLocalizations {
   /// **'Character placement'**
   String get characterPlacementTitle;
 
+  /// No description provided for @characterPlacementOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open camera placement'**
+  String get characterPlacementOpen;
+
+  /// No description provided for @characterPlacementDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Tune character and tracking positions against the live camera.'**
+  String get characterPlacementDescription;
+
   /// No description provided for @foxEarHeightLabel.
   ///
   /// In en, this message translates to:
@@ -469,6 +481,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Gator vertical position'**
   String get gatorVerticalLabel;
+
+  /// No description provided for @trackingHorizontalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking center horizontal'**
+  String get trackingHorizontalLabel;
+
+  /// No description provided for @trackingVerticalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking center vertical'**
+  String get trackingVerticalLabel;
 
   /// No description provided for @placementHigher.
   ///

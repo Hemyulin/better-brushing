@@ -17,6 +17,8 @@ class AppSettings {
     this.foxEarSpacingOffset = 0,
     this.gatorHorizontalOffset = 0,
     this.gatorVerticalOffset = 0,
+    this.trackingHorizontalOffset = 0,
+    this.trackingVerticalOffset = 0,
   });
 
   static const defaultZoneOrder = [
@@ -35,6 +37,8 @@ class AppSettings {
   final double foxEarSpacingOffset;
   final double gatorHorizontalOffset;
   final double gatorVerticalOffset;
+  final double trackingHorizontalOffset;
+  final double trackingVerticalOffset;
 
   static const minDurationSeconds = 60;
   static const maxDurationSeconds = 300;
@@ -66,6 +70,8 @@ class AppSettings {
     double? foxEarSpacingOffset,
     double? gatorHorizontalOffset,
     double? gatorVerticalOffset,
+    double? trackingHorizontalOffset,
+    double? trackingVerticalOffset,
   }) {
     return AppSettings(
       brushingDurationSeconds:
@@ -79,6 +85,10 @@ class AppSettings {
       gatorHorizontalOffset:
           gatorHorizontalOffset ?? this.gatorHorizontalOffset,
       gatorVerticalOffset: gatorVerticalOffset ?? this.gatorVerticalOffset,
+      trackingHorizontalOffset:
+          trackingHorizontalOffset ?? this.trackingHorizontalOffset,
+      trackingVerticalOffset:
+          trackingVerticalOffset ?? this.trackingVerticalOffset,
     );
   }
 
@@ -93,6 +103,8 @@ class AppSettings {
       'foxEarSpacingOffset': foxEarSpacingOffset,
       'gatorHorizontalOffset': gatorHorizontalOffset,
       'gatorVerticalOffset': gatorVerticalOffset,
+      'trackingHorizontalOffset': trackingHorizontalOffset,
+      'trackingVerticalOffset': trackingVerticalOffset,
     };
   }
 
@@ -117,6 +129,12 @@ class AppSettings {
         json['gatorHorizontalOffset'],
       ),
       gatorVerticalOffset: _readCharacterOffset(json['gatorVerticalOffset']),
+      trackingHorizontalOffset: _readCharacterOffset(
+        json['trackingHorizontalOffset'],
+      ),
+      trackingVerticalOffset: _readCharacterOffset(
+        json['trackingVerticalOffset'],
+      ),
     );
   }
 

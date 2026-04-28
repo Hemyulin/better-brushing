@@ -196,6 +196,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get characterPlacementTitle => 'Figurenplatzierung';
 
   @override
+  String get characterPlacementOpen => 'Kamera-Platzierung öffnen';
+
+  @override
+  String get characterPlacementDescription =>
+      'Figuren und Tracking direkt mit der Live-Kamera ausrichten.';
+
+  @override
   String get foxEarHeightLabel => 'Höhe der Fuchsohren';
 
   @override
@@ -206,6 +213,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gatorVerticalLabel => 'Krokodil vertikal';
+
+  @override
+  String get trackingHorizontalLabel => 'Tracking-Mitte horizontal';
+
+  @override
+  String get trackingVerticalLabel => 'Tracking-Mitte vertikal';
 
   @override
   String get placementHigher => 'Höher';

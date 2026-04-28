@@ -105,7 +105,10 @@ class CharacterSelectionScreen extends StatelessWidget {
   void _openSettings(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => SettingsScreen(settingsController: settingsController),
+        builder: (_) => SettingsScreen(
+          availableCameras: availableCameras,
+          settingsController: settingsController,
+        ),
       ),
     );
   }

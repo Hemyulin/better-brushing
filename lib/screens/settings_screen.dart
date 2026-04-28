@@ -1,13 +1,20 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/app_settings_controller.dart';
 import '../l10n/l10n.dart';
 import '../models/app_settings.dart';
+import 'character_placement_settings_screen.dart';
 import 'zone_sequence_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key, required this.settingsController});
+  const SettingsScreen({
+    super.key,
+    required this.availableCameras,
+    required this.settingsController,
+  });
 
+  final List<CameraDescription> availableCameras;
   final AppSettingsController settingsController;
 
   @override
@@ -101,44 +108,12 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _SettingsSection(
                 title: l10n.characterPlacementTitle,
-                child: Column(
-                  children: [
-                    _PlacementSlider(
-                      label: l10n.foxEarHeightLabel,
-                      leadingLabel: l10n.placementHigher,
-                      trailingLabel: l10n.placementLower,
-                      value: settings.foxEarHeightOffset,
-                      onChanged: (value) =>
-                          _update(settings.copyWith(foxEarHeightOffset: value)),
-                    ),
-                    _PlacementSlider(
-                      label: l10n.foxEarSpacingLabel,
-                      leadingLabel: l10n.placementCloser,
-                      trailingLabel: l10n.placementFarther,
-                      value: settings.foxEarSpacingOffset,
-                      onChanged: (value) => _update(
-                        settings.copyWith(foxEarSpacingOffset: value),
-                      ),
-                    ),
-                    _PlacementSlider(
-                      label: l10n.gatorHorizontalLabel,
-                      leadingLabel: l10n.placementLeft,
-                      trailingLabel: l10n.placementRight,
-                      value: settings.gatorHorizontalOffset,
-                      onChanged: (value) => _update(
-                        settings.copyWith(gatorHorizontalOffset: value),
-                      ),
-                    ),
-                    _PlacementSlider(
-                      label: l10n.gatorVerticalLabel,
-                      leadingLabel: l10n.placementHigher,
-                      trailingLabel: l10n.placementLower,
-                      value: settings.gatorVerticalOffset,
-                      onChanged: (value) => _update(
-                        settings.copyWith(gatorVerticalOffset: value),
-                      ),
-                    ),
-                  ],
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.characterPlacementOpen),
+                  subtitle: Text(l10n.characterPlacementDescription),
+                  trailing: const Icon(Icons.camera_alt_rounded),
+                  onTap: () => _openCharacterPlacementSettings(context),
                 ),
               ),
               const SizedBox(height: 16),
@@ -208,6 +183,17 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  void _openCharacterPlacementSettings(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CharacterPlacementSettingsScreen(
+          availableCameras: availableCameras,
+          settingsController: settingsController,
+        ),
+      ),
+    );
+  }
+
   String _formatMinutes(int seconds) {
     final wholeMinutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
@@ -215,56 +201,6 @@ class SettingsScreen extends StatelessWidget {
       return '$wholeMinutes';
     }
     return '$wholeMinutes.5';
-  }
-}
-
-class _PlacementSlider extends StatelessWidget {
-  const _PlacementSlider({
-    required this.label,
-    required this.leadingLabel,
-    required this.trailingLabel,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final String leadingLabel;
-  final String trailingLabel;
-  final double value;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 4),
-          Slider(
-            value: value,
-            min: AppSettings.minCharacterOffset,
-            max: AppSettings.maxCharacterOffset,
-            divisions: 8,
-            label: value.toStringAsFixed(2),
-            onChanged: onChanged,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(leadingLabel, style: Theme.of(context).textTheme.bodySmall),
-              Text(trailingLabel, style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 }
 

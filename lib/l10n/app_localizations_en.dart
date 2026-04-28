@@ -196,6 +196,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterPlacementTitle => 'Character placement';
 
   @override
+  String get characterPlacementOpen => 'Open camera placement';
+
+  @override
+  String get characterPlacementDescription =>
+      'Tune character and tracking positions against the live camera.';
+
+  @override
   String get foxEarHeightLabel => 'Fox ear height';
 
   @override
@@ -206,6 +213,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gatorVerticalLabel => 'Gator vertical position';
+
+  @override
+  String get trackingHorizontalLabel => 'Tracking center horizontal';
+
+  @override
+  String get trackingVerticalLabel => 'Tracking center vertical';
 
   @override
   String get placementHigher => 'Higher';

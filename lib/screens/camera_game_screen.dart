@@ -14,6 +14,7 @@ import '../models/app_settings.dart';
 import '../models/brushing_zone.dart';
 import '../models/character.dart';
 import '../services/volume_button_service.dart';
+import '../utils/face_mesh_camera_image_adapter.dart';
 
 class CameraGameScreen extends StatefulWidget {
   const CameraGameScreen({
@@ -162,7 +163,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
           controller.description.lensDirection == CameraLensDirection.front;
       FaceDetectionResult? result;
       if (Platform.isAndroid) {
-        final nv21Image = _FaceMeshCameraImageAdapter.toNv21(image);
+        final nv21Image = FaceMeshCameraImageAdapter.toNv21(image);
         if (nv21Image == null) {
           return;
         }
@@ -172,7 +173,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
           mirrorHorizontal: isFrontCamera,
         );
       } else if (Platform.isIOS) {
-        final bgraImage = _FaceMeshCameraImageAdapter.toBgra(image);
+        final bgraImage = FaceMeshCameraImageAdapter.toBgra(image);
         if (bgraImage == null) {
           return;
         }
@@ -184,11 +185,21 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       }
 
       final faceBounds = _faceBoundsFromDetection(result?.primaryDetection);
+      final adjustedFaceBounds = faceBounds == null
+          ? null
+          : _shiftFaceBounds(
+              faceBounds,
+              horizontal: widget.settings.trackingHorizontalOffset,
+              vertical: widget.settings.trackingVerticalOffset,
+            );
       if (!mounted) {
         return;
       }
       setState(() {
-        _trackedFaceBounds = _smoothFaceBounds(_trackedFaceBounds, faceBounds);
+        _trackedFaceBounds = _smoothFaceBounds(
+          _trackedFaceBounds,
+          adjustedFaceBounds,
+        );
       });
     } catch (_) {
       if (mounted) {
@@ -231,6 +242,18 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       detection.right.clamp(0.0, 1.0),
       detection.bottom.clamp(0.0, 1.0),
     );
+  }
+
+  Rect _shiftFaceBounds(
+    Rect bounds, {
+    required double horizontal,
+    required double vertical,
+  }) {
+    final dx = horizontal * 0.18;
+    final dy = vertical * 0.18;
+    final shiftedLeft = (bounds.left + dx).clamp(0.0, 1.0 - bounds.width);
+    final shiftedTop = (bounds.top + dy).clamp(0.0, 1.0 - bounds.height);
+    return Rect.fromLTWH(shiftedLeft, shiftedTop, bounds.width, bounds.height);
   }
 
   Rect? _smoothFaceBounds(Rect? previous, Rect? next) {
@@ -320,7 +343,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                         child: Stack(
                           children: [
                             Positioned.fill(
-                              child: _CharacterThemeOverlay(
+                              child: CharacterThemeOverlay(
                                 character: widget.character,
                                 faceBounds: _trackedFaceBounds,
                                 zoneChangeAnimation: _zoneChangeAnimation,
@@ -443,8 +466,9 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   }
 }
 
-class _CharacterThemeOverlay extends StatelessWidget {
-  const _CharacterThemeOverlay({
+class CharacterThemeOverlay extends StatelessWidget {
+  const CharacterThemeOverlay({
+    super.key,
     required this.character,
     required this.faceBounds,
     required this.zoneChangeAnimation,
@@ -546,9 +570,6 @@ class _FoxThemeOverlay extends StatelessWidget {
               right: rightEarRight,
               child: _FoxEarDecoration(flip: true, outwardTurn: outwardTurn),
             ),
-            _EarPlacementGuides(
-              color: const Color(0xFFF28B50).withValues(alpha: 0.16),
-            ),
           ],
         );
       },
@@ -611,9 +632,6 @@ class _GatorThemeOverlay extends StatelessWidget {
               left: browLeft,
               width: browWidth,
               child: _GatorBrowDecoration(happyEyes: happyEyes),
-            ),
-            _EarPlacementGuides(
-              color: const Color(0xFF43B49D).withValues(alpha: 0.16),
             ),
           ],
         );
@@ -998,60 +1016,6 @@ class _GatorBrowPainter extends CustomPainter {
   }
 }
 
-class _EarPlacementGuides extends StatelessWidget {
-  const _EarPlacementGuides({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final guideSize = (constraints.maxWidth * 0.17).clamp(48.0, 76.0);
-        final top = constraints.maxHeight * 0.26;
-        final side = constraints.maxWidth * 0.16;
-
-        return Stack(
-          children: [
-            Positioned(
-              left: side.clamp(0.0, constraints.maxWidth - guideSize),
-              top: top.clamp(0.0, constraints.maxHeight - guideSize),
-              child: _EarPlacementCircle(size: guideSize, color: color),
-            ),
-            Positioned(
-              right: side.clamp(0.0, constraints.maxWidth - guideSize),
-              top: top.clamp(0.0, constraints.maxHeight - guideSize),
-              child: _EarPlacementCircle(size: guideSize, color: color),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _EarPlacementCircle extends StatelessWidget {
-  const _EarPlacementCircle({required this.size, required this.color});
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.26),
-          width: 2,
-        ),
-      ),
-      child: SizedBox.square(dimension: size),
-    );
-  }
-}
-
 class _PausedOverlay extends StatelessWidget {
   const _PausedOverlay({required this.locked});
 
@@ -1295,149 +1259,5 @@ class _FallbackCameraBackground extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _FaceMeshCameraImageAdapter {
-  const _FaceMeshCameraImageAdapter._();
-
-  static FaceMeshNv21Image? toNv21(CameraImage image) {
-    final planes = image.planes;
-    if (planes.isEmpty || image.width.isOdd || image.height.isOdd) {
-      return null;
-    }
-    if (planes.length == 1) {
-      return _fromSinglePlaneNv21(image);
-    }
-    if (planes.length == 2) {
-      return _fromYAndInterleavedVuPlanes(image);
-    }
-    if (planes.length >= 3) {
-      return _fromYuv420Planes(image);
-    }
-    return null;
-  }
-
-  static FaceMeshImage? toBgra(CameraImage image) {
-    final planes = image.planes;
-    if (planes.isEmpty) {
-      return null;
-    }
-    final plane = planes.first;
-    return FaceMeshImage(
-      pixels: plane.bytes,
-      width: image.width,
-      height: image.height,
-      bytesPerRow: plane.bytesPerRow,
-      pixelFormat: FaceMeshPixelFormat.bgra,
-    );
-  }
-
-  static FaceMeshNv21Image? _fromSinglePlaneNv21(CameraImage image) {
-    final plane = image.planes.first;
-    final rowStride = plane.bytesPerRow;
-    final ySize = rowStride * image.height;
-    final vuSize = rowStride * (image.height ~/ 2);
-    if (plane.bytes.length < ySize + vuSize) {
-      return null;
-    }
-    return FaceMeshNv21Image(
-      yPlane: Uint8List.sublistView(plane.bytes, 0, ySize),
-      vuPlane: Uint8List.sublistView(plane.bytes, ySize, ySize + vuSize),
-      width: image.width,
-      height: image.height,
-      yBytesPerRow: rowStride,
-      vuBytesPerRow: rowStride,
-    );
-  }
-
-  static FaceMeshNv21Image? _fromYAndInterleavedVuPlanes(CameraImage image) {
-    final yPlane = _copyPlane(
-      image.planes[0],
-      width: image.width,
-      height: image.height,
-    );
-    final vuPlane = _copyPlane(
-      image.planes[1],
-      width: image.width,
-      height: image.height ~/ 2,
-    );
-    if (yPlane == null || vuPlane == null) {
-      return null;
-    }
-    return FaceMeshNv21Image(
-      yPlane: yPlane,
-      vuPlane: vuPlane,
-      width: image.width,
-      height: image.height,
-      yBytesPerRow: image.width,
-      vuBytesPerRow: image.width,
-    );
-  }
-
-  static FaceMeshNv21Image? _fromYuv420Planes(CameraImage image) {
-    final yPlane = _copyPlane(
-      image.planes[0],
-      width: image.width,
-      height: image.height,
-    );
-    if (yPlane == null) {
-      return null;
-    }
-
-    final uPlane = image.planes[1];
-    final vPlane = image.planes[2];
-    final uvWidth = image.width ~/ 2;
-    final uvHeight = image.height ~/ 2;
-    final vuPlane = Uint8List(image.width * uvHeight);
-
-    for (var row = 0; row < uvHeight; row++) {
-      for (var col = 0; col < uvWidth; col++) {
-        final u = _readPlaneByte(uPlane, row, col);
-        final v = _readPlaneByte(vPlane, row, col);
-        if (u == null || v == null) {
-          return null;
-        }
-        final out = row * image.width + col * 2;
-        vuPlane[out] = v;
-        vuPlane[out + 1] = u;
-      }
-    }
-
-    return FaceMeshNv21Image(
-      yPlane: yPlane,
-      vuPlane: vuPlane,
-      width: image.width,
-      height: image.height,
-      yBytesPerRow: image.width,
-      vuBytesPerRow: image.width,
-    );
-  }
-
-  static Uint8List? _copyPlane(
-    Plane plane, {
-    required int width,
-    required int height,
-  }) {
-    final out = Uint8List(width * height);
-    for (var row = 0; row < height; row++) {
-      for (var col = 0; col < width; col++) {
-        final value = _readPlaneByte(plane, row, col);
-        if (value == null) {
-          return null;
-        }
-        out[row * width + col] = value;
-      }
-    }
-    return out;
-  }
-
-  static int? _readPlaneByte(Plane plane, int row, int col) {
-    final pixelStride = plane.bytesPerPixel ?? 1;
-    final index = row * plane.bytesPerRow + col * pixelStride;
-    if (index < 0 || index >= plane.bytes.length) {
-      return null;
-    }
-    return plane.bytes[index];
   }
 }
