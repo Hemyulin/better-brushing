@@ -289,12 +289,7 @@ class _CharacterPlacementSettingsScreenState
                 zoneChangeAnimation: const AlwaysStoppedAnimation(1),
                 settings: settings,
               ),
-              SafeArea(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: _buildControls(context, settings),
-                ),
-              ),
+              SafeArea(child: _buildControls(context, settings)),
             ],
           ),
         );
@@ -336,122 +331,141 @@ class _CharacterPlacementSettingsScreenState
   Widget _buildControls(BuildContext context, AppSettings settings) {
     final l10n = context.l10n;
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.58,
+    final leftSliders = _selectedCharacter == BrushingCharacter.fox
+        ? [
+            _EdgeSlider(
+              label: l10n.foxEarHeightLabel,
+              topLabel: l10n.placementHigher,
+              bottomLabel: l10n.placementLower,
+              topIsMax: false,
+              value: settings.foxEarHeightOffset,
+              onChanged: (value) =>
+                  _update(settings.copyWith(foxEarHeightOffset: value)),
+            ),
+            _EdgeSlider(
+              label: l10n.trackingVerticalLabel,
+              topLabel: l10n.placementHigher,
+              bottomLabel: l10n.placementLower,
+              topIsMax: false,
+              value: settings.trackingVerticalOffset,
+              onChanged: (value) =>
+                  _update(settings.copyWith(trackingVerticalOffset: value)),
+            ),
+          ]
+        : [
+            _EdgeSlider(
+              label: l10n.gatorVerticalLabel,
+              topLabel: l10n.placementHigher,
+              bottomLabel: l10n.placementLower,
+              topIsMax: false,
+              value: settings.gatorVerticalOffset,
+              onChanged: (value) =>
+                  _update(settings.copyWith(gatorVerticalOffset: value)),
+            ),
+            _EdgeSlider(
+              label: l10n.trackingVerticalLabel,
+              topLabel: l10n.placementHigher,
+              bottomLabel: l10n.placementLower,
+              topIsMax: false,
+              value: settings.trackingVerticalOffset,
+              onChanged: (value) =>
+                  _update(settings.copyWith(trackingVerticalOffset: value)),
+            ),
+          ];
+
+    final rightSliders = _selectedCharacter == BrushingCharacter.fox
+        ? [
+            _EdgeSlider(
+              label: l10n.foxEarSpacingLabel,
+              topLabel: l10n.placementFarther,
+              bottomLabel: l10n.placementCloser,
+              value: settings.foxEarSpacingOffset,
+              onChanged: (value) =>
+                  _update(settings.copyWith(foxEarSpacingOffset: value)),
+            ),
+            _EdgeSlider(
+              label: l10n.trackingHorizontalLabel,
+              topLabel: l10n.placementRight,
+              bottomLabel: l10n.placementLeft,
+              value: settings.trackingHorizontalOffset,
+              onChanged: (value) =>
+                  _update(settings.copyWith(trackingHorizontalOffset: value)),
+            ),
+          ]
+        : [
+            _EdgeSlider(
+              label: l10n.gatorHorizontalLabel,
+              topLabel: l10n.placementRight,
+              bottomLabel: l10n.placementLeft,
+              value: settings.gatorHorizontalOffset,
+              onChanged: (value) =>
+                  _update(settings.copyWith(gatorHorizontalOffset: value)),
+            ),
+            _EdgeSlider(
+              label: l10n.trackingHorizontalLabel,
+              topLabel: l10n.placementRight,
+              bottomLabel: l10n.placementLeft,
+              value: settings.trackingHorizontalOffset,
+              onChanged: (value) =>
+                  _update(settings.copyWith(trackingHorizontalOffset: value)),
+            ),
+          ];
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _SliderRail(sliders: leftSliders),
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => setState(
-                        () => _selectedCharacter = BrushingCharacter.fox,
-                      ),
-                      icon: Text(BrushingCharacter.fox.emoji),
-                      label: Text(l10n.characterName(BrushingCharacter.fox)),
-                      style: FilledButton.styleFrom(
-                        backgroundColor:
-                            _selectedCharacter == BrushingCharacter.fox
-                            ? const Color(0xFFF28B50)
-                            : const Color(0xFF786F91),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: _SliderRail(sliders: rightSliders),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => setState(
+                      () => _selectedCharacter = BrushingCharacter.fox,
+                    ),
+                    icon: Text(BrushingCharacter.fox.emoji),
+                    label: Text(l10n.characterName(BrushingCharacter.fox)),
+                    style: FilledButton.styleFrom(
+                      backgroundColor:
+                          _selectedCharacter == BrushingCharacter.fox
+                          ? const Color(0xFFF28B50)
+                          : const Color(0xFF786F91),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: () => setState(
-                        () => _selectedCharacter = BrushingCharacter.gator,
-                      ),
-                      icon: Text(BrushingCharacter.gator.emoji),
-                      label: Text(l10n.characterName(BrushingCharacter.gator)),
-                      style: FilledButton.styleFrom(
-                        backgroundColor:
-                            _selectedCharacter == BrushingCharacter.gator
-                            ? const Color(0xFF43B49D)
-                            : const Color(0xFF786F91),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => setState(
+                      () => _selectedCharacter = BrushingCharacter.gator,
+                    ),
+                    icon: Text(BrushingCharacter.gator.emoji),
+                    label: Text(l10n.characterName(BrushingCharacter.gator)),
+                    style: FilledButton.styleFrom(
+                      backgroundColor:
+                          _selectedCharacter == BrushingCharacter.gator
+                          ? const Color(0xFF43B49D)
+                          : const Color(0xFF786F91),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              if (_selectedCharacter == BrushingCharacter.fox) ...[
-                _PlacementSlider(
-                  label: l10n.foxEarHeightLabel,
-                  leadingLabel: l10n.placementHigher,
-                  trailingLabel: l10n.placementLower,
-                  value: settings.foxEarHeightOffset,
-                  onChanged: (value) =>
-                      _update(settings.copyWith(foxEarHeightOffset: value)),
-                ),
-                _PlacementSlider(
-                  label: l10n.foxEarSpacingLabel,
-                  leadingLabel: l10n.placementCloser,
-                  trailingLabel: l10n.placementFarther,
-                  value: settings.foxEarSpacingOffset,
-                  onChanged: (value) =>
-                      _update(settings.copyWith(foxEarSpacingOffset: value)),
-                ),
-              ] else ...[
-                _PlacementSlider(
-                  label: l10n.gatorHorizontalLabel,
-                  leadingLabel: l10n.placementLeft,
-                  trailingLabel: l10n.placementRight,
-                  value: settings.gatorHorizontalOffset,
-                  onChanged: (value) =>
-                      _update(settings.copyWith(gatorHorizontalOffset: value)),
-                ),
-                _PlacementSlider(
-                  label: l10n.gatorVerticalLabel,
-                  leadingLabel: l10n.placementHigher,
-                  trailingLabel: l10n.placementLower,
-                  value: settings.gatorVerticalOffset,
-                  onChanged: (value) =>
-                      _update(settings.copyWith(gatorVerticalOffset: value)),
                 ),
               ],
-              const Divider(height: 18),
-              _PlacementSlider(
-                label: l10n.trackingHorizontalLabel,
-                leadingLabel: l10n.placementLeft,
-                trailingLabel: l10n.placementRight,
-                value: settings.trackingHorizontalOffset,
-                onChanged: (value) =>
-                    _update(settings.copyWith(trackingHorizontalOffset: value)),
-              ),
-              _PlacementSlider(
-                label: l10n.trackingVerticalLabel,
-                leadingLabel: l10n.placementHigher,
-                trailingLabel: l10n.placementLower,
-                value: settings.trackingVerticalOffset,
-                onChanged: (value) =>
-                    _update(settings.copyWith(trackingVerticalOffset: value)),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -460,48 +474,104 @@ class _CharacterPlacementSettingsScreenState
   }
 }
 
-class _PlacementSlider extends StatelessWidget {
-  const _PlacementSlider({
+class _SliderRail extends StatelessWidget {
+  const _SliderRail({required this.sliders});
+
+  final List<_EdgeSlider> sliders;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 92),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (final slider in sliders) ...[
+            slider,
+            if (slider != sliders.last) const SizedBox(height: 12),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EdgeSlider extends StatelessWidget {
+  const _EdgeSlider({
     required this.label,
-    required this.leadingLabel,
-    required this.trailingLabel,
+    required this.topLabel,
+    required this.bottomLabel,
+    this.topIsMax = true,
     required this.value,
     required this.onChanged,
   });
 
   final String label;
-  final String leadingLabel;
-  final String trailingLabel;
+  final String topLabel;
+  final String bottomLabel;
+  final bool topIsMax;
   final double value;
   final ValueChanged<double> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: Theme.of(
-            context,
-          ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        Slider(
-          value: value,
-          min: AppSettings.minCharacterOffset,
-          max: AppSettings.maxCharacterOffset,
-          divisions: 8,
-          label: value.toStringAsFixed(2),
-          onChanged: onChanged,
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(leadingLabel, style: Theme.of(context).textTheme.bodySmall),
-            Text(trailingLabel, style: Theme.of(context).textTheme.bodySmall),
-          ],
-        ),
-      ],
+    return Container(
+      width: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 12,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            topLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          SizedBox(
+            height: 164,
+            child: RotatedBox(
+              quarterTurns: -1,
+              child: Slider(
+                value: topIsMax ? value : -value,
+                min: AppSettings.minCharacterOffset,
+                max: AppSettings.maxCharacterOffset,
+                divisions: 8,
+                label: value.toStringAsFixed(2),
+                onChanged: (value) => onChanged(topIsMax ? value : -value),
+              ),
+            ),
+          ),
+          Text(
+            bottomLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ],
+      ),
     );
   }
 }

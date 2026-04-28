@@ -538,9 +538,10 @@ class _FoxThemeOverlay extends StatelessWidget {
         final headTop = face == null
             ? constraints.maxHeight * 0.18
             : (face.top * constraints.maxHeight - faceHeight * 0.82);
+        final maxEarGap = math.max(110.0, constraints.maxWidth - earWidth - 16);
         final earGap = (faceWidth * 0.92 + earSpacingOffset * 90).clamp(
           110.0,
-          380.0,
+          maxEarGap,
         );
         final earTop =
             (headTop -
@@ -550,13 +551,15 @@ class _FoxThemeOverlay extends StatelessWidget {
         final outwardTurn =
             math.sin(Curves.easeInOut.transform(zoneChangeProgress) * math.pi) *
             0.48;
-        final leftEarLeft = (headCenterX - earGap / 2 - earWidth * 0.5).clamp(
-          8.0,
-          constraints.maxWidth - earWidth - 8,
+        final groupWidth = earGap + earWidth;
+        final clampedHeadCenterX = headCenterX.clamp(
+          groupWidth / 2 + 8,
+          constraints.maxWidth - groupWidth / 2 - 8,
         );
+        final leftEarLeft = clampedHeadCenterX - earGap / 2 - earWidth * 0.5;
         final rightEarRight =
-            (constraints.maxWidth - (headCenterX + earGap / 2 + earWidth * 0.5))
-                .clamp(8.0, constraints.maxWidth - earWidth - 8);
+            constraints.maxWidth -
+            (clampedHeadCenterX + earGap / 2 + earWidth * 0.5);
 
         return Stack(
           children: [
