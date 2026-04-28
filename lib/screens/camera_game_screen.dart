@@ -324,6 +324,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                                 character: widget.character,
                                 faceBounds: _trackedFaceBounds,
                                 zoneChangeAnimation: _zoneChangeAnimation,
+                                settings: widget.settings,
                               ),
                             ),
                             Positioned.fill(
@@ -447,11 +448,13 @@ class _CharacterThemeOverlay extends StatelessWidget {
     required this.character,
     required this.faceBounds,
     required this.zoneChangeAnimation,
+    required this.settings,
   });
 
   final BrushingCharacter character;
   final Rect? faceBounds;
   final Animation<double> zoneChangeAnimation;
+  final AppSettings settings;
 
   @override
   Widget build(BuildContext context) {
@@ -463,10 +466,14 @@ class _CharacterThemeOverlay extends StatelessWidget {
             BrushingCharacter.fox => _FoxThemeOverlay(
               faceBounds: faceBounds,
               zoneChangeProgress: zoneChangeAnimation.value,
+              earHeightOffset: settings.foxEarHeightOffset,
+              earSpacingOffset: settings.foxEarSpacingOffset,
             ),
             BrushingCharacter.gator => _GatorThemeOverlay(
               faceBounds: faceBounds,
               zoneChangeProgress: zoneChangeAnimation.value,
+              horizontalOffset: settings.gatorHorizontalOffset,
+              verticalOffset: settings.gatorVerticalOffset,
             ),
           },
         );
@@ -479,10 +486,14 @@ class _FoxThemeOverlay extends StatelessWidget {
   const _FoxThemeOverlay({
     required this.faceBounds,
     required this.zoneChangeProgress,
+    required this.earHeightOffset,
+    required this.earSpacingOffset,
   });
 
   final Rect? faceBounds;
   final double zoneChangeProgress;
+  final double earHeightOffset;
+  final double earSpacingOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -503,11 +514,15 @@ class _FoxThemeOverlay extends StatelessWidget {
         final headTop = face == null
             ? constraints.maxHeight * 0.18
             : (face.top * constraints.maxHeight - faceHeight * 0.82);
-        final earGap = (faceWidth * 0.92).clamp(154.0, 320.0);
-        final earTop = (headTop - earHeight * 1.02).clamp(
-          8.0,
-          constraints.maxHeight - earHeight,
+        final earGap = (faceWidth * 0.92 + earSpacingOffset * 90).clamp(
+          110.0,
+          380.0,
         );
+        final earTop =
+            (headTop -
+                    earHeight * 1.02 +
+                    earHeightOffset * constraints.maxHeight * 0.16)
+                .clamp(8.0, constraints.maxHeight - earHeight);
         final outwardTurn =
             math.sin(Curves.easeInOut.transform(zoneChangeProgress) * math.pi) *
             0.48;
@@ -545,10 +560,14 @@ class _GatorThemeOverlay extends StatelessWidget {
   const _GatorThemeOverlay({
     required this.faceBounds,
     required this.zoneChangeProgress,
+    required this.horizontalOffset,
+    required this.verticalOffset,
   });
 
   final Rect? faceBounds;
   final double zoneChangeProgress;
+  final double horizontalOffset;
+  final double verticalOffset;
 
   @override
   Widget build(BuildContext context) {
@@ -563,10 +582,13 @@ class _GatorThemeOverlay extends StatelessWidget {
             : face.height * constraints.maxHeight;
         final headCenterX = face == null
             ? constraints.maxWidth * 0.5
-            : face.center.dx * constraints.maxWidth;
+            : face.center.dx * constraints.maxWidth +
+                  horizontalOffset * constraints.maxWidth * 0.18;
         final headTop = face == null
             ? constraints.maxHeight * 0.18
-            : (face.top * constraints.maxHeight - faceHeight * 0.82);
+            : (face.top * constraints.maxHeight -
+                  faceHeight * 0.82 +
+                  verticalOffset * constraints.maxHeight * 0.16);
         final browWidth = face == null
             ? constraints.maxWidth - 36
             : (faceWidth * 1.78).clamp(250.0, constraints.maxWidth - 16);

@@ -191,4 +191,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get zoneSequenceReset => 'Reset';
+
+  @override
+  String get characterPlacementTitle => 'Character placement';
+
+  @override
+  String get foxEarHeightLabel => 'Fox ear height';
+
+  @override
+  String get foxEarSpacingLabel => 'Fox ear distance';
+
+  @override
+  String get gatorHorizontalLabel => 'Gator horizontal position';
+
+  @override
+  String get gatorVerticalLabel => 'Gator vertical position';
+
+  @override
+  String get placementHigher => 'Higher';
+
+  @override
+  String get placementLower => 'Lower';
+
+  @override
+  String get placementCloser => 'Closer';
+
+  @override
+  String get placementFarther => 'Farther';
+
+  @override
+  String get placementLeft => 'Left';
+
+  @override
+  String get placementRight => 'Right';
 }

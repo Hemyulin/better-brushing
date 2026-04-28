@@ -70,5 +70,16 @@
   "zoneSequenceCounterClockwise": "Gegen den Uhrzeigersinn",
   "zoneSequenceZFormation": "Z-Form",
   "zoneSequenceClear": "Leeren",
-  "zoneSequenceReset": "Zurücksetzen"
+  "zoneSequenceReset": "Zurücksetzen",
+  "characterPlacementTitle": "Figurenplatzierung",
+  "foxEarHeightLabel": "Höhe der Fuchsohren",
+  "foxEarSpacingLabel": "Abstand der Fuchsohren",
+  "gatorHorizontalLabel": "Krokodil horizontal",
+  "gatorVerticalLabel": "Krokodil vertikal",
+  "placementHigher": "Höher",
+  "placementLower": "Tiefer",
+  "placementCloser": "Näher",
+  "placementFarther": "Weiter",
+  "placementLeft": "Links",
+  "placementRight": "Rechts"
 }

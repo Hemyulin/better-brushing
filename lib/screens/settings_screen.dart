@@ -100,6 +100,49 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _SettingsSection(
+                title: l10n.characterPlacementTitle,
+                child: Column(
+                  children: [
+                    _PlacementSlider(
+                      label: l10n.foxEarHeightLabel,
+                      leadingLabel: l10n.placementHigher,
+                      trailingLabel: l10n.placementLower,
+                      value: settings.foxEarHeightOffset,
+                      onChanged: (value) =>
+                          _update(settings.copyWith(foxEarHeightOffset: value)),
+                    ),
+                    _PlacementSlider(
+                      label: l10n.foxEarSpacingLabel,
+                      leadingLabel: l10n.placementCloser,
+                      trailingLabel: l10n.placementFarther,
+                      value: settings.foxEarSpacingOffset,
+                      onChanged: (value) => _update(
+                        settings.copyWith(foxEarSpacingOffset: value),
+                      ),
+                    ),
+                    _PlacementSlider(
+                      label: l10n.gatorHorizontalLabel,
+                      leadingLabel: l10n.placementLeft,
+                      trailingLabel: l10n.placementRight,
+                      value: settings.gatorHorizontalOffset,
+                      onChanged: (value) => _update(
+                        settings.copyWith(gatorHorizontalOffset: value),
+                      ),
+                    ),
+                    _PlacementSlider(
+                      label: l10n.gatorVerticalLabel,
+                      leadingLabel: l10n.placementHigher,
+                      trailingLabel: l10n.placementLower,
+                      value: settings.gatorVerticalOffset,
+                      onChanged: (value) => _update(
+                        settings.copyWith(gatorVerticalOffset: value),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              _SettingsSection(
                 title: l10n.pauseSettingsTitle,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,6 +215,56 @@ class SettingsScreen extends StatelessWidget {
       return '$wholeMinutes';
     }
     return '$wholeMinutes.5';
+  }
+}
+
+class _PlacementSlider extends StatelessWidget {
+  const _PlacementSlider({
+    required this.label,
+    required this.leadingLabel,
+    required this.trailingLabel,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String leadingLabel;
+  final String trailingLabel;
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Slider(
+            value: value,
+            min: AppSettings.minCharacterOffset,
+            max: AppSettings.maxCharacterOffset,
+            divisions: 8,
+            label: value.toStringAsFixed(2),
+            onChanged: onChanged,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(leadingLabel, style: Theme.of(context).textTheme.bodySmall),
+              Text(trailingLabel, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 

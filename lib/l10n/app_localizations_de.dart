@@ -191,4 +191,37 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get zoneSequenceReset => 'Zurücksetzen';
+
+  @override
+  String get characterPlacementTitle => 'Figurenplatzierung';
+
+  @override
+  String get foxEarHeightLabel => 'Höhe der Fuchsohren';
+
+  @override
+  String get foxEarSpacingLabel => 'Abstand der Fuchsohren';
+
+  @override
+  String get gatorHorizontalLabel => 'Krokodil horizontal';
+
+  @override
+  String get gatorVerticalLabel => 'Krokodil vertikal';
+
+  @override
+  String get placementHigher => 'Höher';
+
+  @override
+  String get placementLower => 'Tiefer';
+
+  @override
+  String get placementCloser => 'Näher';
+
+  @override
+  String get placementFarther => 'Weiter';
+
+  @override
+  String get placementLeft => 'Links';
+
+  @override
+  String get placementRight => 'Rechts';
 }

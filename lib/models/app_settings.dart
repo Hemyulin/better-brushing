@@ -13,6 +13,10 @@ class AppSettings {
     this.pauseControl = PauseControl.screen,
     this.pauseLockEnabled = false,
     this.zoneOrder = defaultZoneOrder,
+    this.foxEarHeightOffset = 0,
+    this.foxEarSpacingOffset = 0,
+    this.gatorHorizontalOffset = 0,
+    this.gatorVerticalOffset = 0,
   });
 
   static const defaultZoneOrder = [
@@ -27,10 +31,16 @@ class AppSettings {
   final PauseControl pauseControl;
   final bool pauseLockEnabled;
   final List<BrushingZone> zoneOrder;
+  final double foxEarHeightOffset;
+  final double foxEarSpacingOffset;
+  final double gatorHorizontalOffset;
+  final double gatorVerticalOffset;
 
   static const minDurationSeconds = 60;
   static const maxDurationSeconds = 300;
   static const durationStepSeconds = 30;
+  static const minCharacterOffset = -1.0;
+  static const maxCharacterOffset = 1.0;
 
   Locale? get locale => switch (language) {
     AppLanguage.system => null,
@@ -52,6 +62,10 @@ class AppSettings {
     PauseControl? pauseControl,
     bool? pauseLockEnabled,
     List<BrushingZone>? zoneOrder,
+    double? foxEarHeightOffset,
+    double? foxEarSpacingOffset,
+    double? gatorHorizontalOffset,
+    double? gatorVerticalOffset,
   }) {
     return AppSettings(
       brushingDurationSeconds:
@@ -60,6 +74,11 @@ class AppSettings {
       pauseControl: pauseControl ?? this.pauseControl,
       pauseLockEnabled: pauseLockEnabled ?? this.pauseLockEnabled,
       zoneOrder: zoneOrder ?? this.zoneOrder,
+      foxEarHeightOffset: foxEarHeightOffset ?? this.foxEarHeightOffset,
+      foxEarSpacingOffset: foxEarSpacingOffset ?? this.foxEarSpacingOffset,
+      gatorHorizontalOffset:
+          gatorHorizontalOffset ?? this.gatorHorizontalOffset,
+      gatorVerticalOffset: gatorVerticalOffset ?? this.gatorVerticalOffset,
     );
   }
 
@@ -70,6 +89,10 @@ class AppSettings {
       'pauseControl': pauseControl.name,
       'pauseLockEnabled': pauseLockEnabled,
       'zoneOrder': zoneOrder.map((zone) => zone.name).toList(),
+      'foxEarHeightOffset': foxEarHeightOffset,
+      'foxEarSpacingOffset': foxEarSpacingOffset,
+      'gatorHorizontalOffset': gatorHorizontalOffset,
+      'gatorVerticalOffset': gatorVerticalOffset,
     };
   }
 
@@ -88,12 +111,23 @@ class AppSettings {
       ),
       pauseLockEnabled: json['pauseLockEnabled'] == true,
       zoneOrder: _readZoneOrder(json),
+      foxEarHeightOffset: _readCharacterOffset(json['foxEarHeightOffset']),
+      foxEarSpacingOffset: _readCharacterOffset(json['foxEarSpacingOffset']),
+      gatorHorizontalOffset: _readCharacterOffset(
+        json['gatorHorizontalOffset'],
+      ),
+      gatorVerticalOffset: _readCharacterOffset(json['gatorVerticalOffset']),
     );
   }
 
   static int _readDuration(Object? value) {
     final duration = value is num ? value.round() : 120;
     return duration.clamp(minDurationSeconds, maxDurationSeconds);
+  }
+
+  static double _readCharacterOffset(Object? value) {
+    final offset = value is num ? value.toDouble() : 0.0;
+    return offset.clamp(minCharacterOffset, maxCharacterOffset);
   }
 
   static T _readEnum<T extends Enum>(

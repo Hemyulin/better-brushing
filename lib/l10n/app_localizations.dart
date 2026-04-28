@@ -439,6 +439,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset'**
   String get zoneSequenceReset;
+
+  /// No description provided for @characterPlacementTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Character placement'**
+  String get characterPlacementTitle;
+
+  /// No description provided for @foxEarHeightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fox ear height'**
+  String get foxEarHeightLabel;
+
+  /// No description provided for @foxEarSpacingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fox ear distance'**
+  String get foxEarSpacingLabel;
+
+  /// No description provided for @gatorHorizontalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gator horizontal position'**
+  String get gatorHorizontalLabel;
+
+  /// No description provided for @gatorVerticalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gator vertical position'**
+  String get gatorVerticalLabel;
+
+  /// No description provided for @placementHigher.
+  ///
+  /// In en, this message translates to:
+  /// **'Higher'**
+  String get placementHigher;
+
+  /// No description provided for @placementLower.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower'**
+  String get placementLower;
+
+  /// No description provided for @placementCloser.
+  ///
+  /// In en, this message translates to:
+  /// **'Closer'**
+  String get placementCloser;
+
+  /// No description provided for @placementFarther.
+  ///
+  /// In en, this message translates to:
+  /// **'Farther'**
+  String get placementFarther;
+
+  /// No description provided for @placementLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get placementLeft;
+
+  /// No description provided for @placementRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get placementRight;
 }
 
 class _AppLocalizationsDelegate

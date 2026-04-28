@@ -70,5 +70,16 @@
   "zoneSequenceCounterClockwise": "Counter-clockwise",
   "zoneSequenceZFormation": "Z formation",
   "zoneSequenceClear": "Clear",
-  "zoneSequenceReset": "Reset"
+  "zoneSequenceReset": "Reset",
+  "characterPlacementTitle": "Character placement",
+  "foxEarHeightLabel": "Fox ear height",
+  "foxEarSpacingLabel": "Fox ear distance",
+  "gatorHorizontalLabel": "Gator horizontal position",
+  "gatorVerticalLabel": "Gator vertical position",
+  "placementHigher": "Higher",
+  "placementLower": "Lower",
+  "placementCloser": "Closer",
+  "placementFarther": "Farther",
+  "placementLeft": "Left",
+  "placementRight": "Right"
 }
