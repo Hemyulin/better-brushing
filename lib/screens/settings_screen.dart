@@ -108,12 +108,104 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _SettingsSection(
                 title: l10n.characterPlacementTitle,
-                child: ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(l10n.characterPlacementOpen),
-                  subtitle: Text(l10n.characterPlacementDescription),
-                  trailing: const Icon(Icons.camera_alt_rounded),
-                  onTap: () => _openCharacterPlacementSettings(context),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(l10n.characterPlacementOpen),
+                      subtitle: Text(l10n.characterPlacementDescription),
+                      trailing: const Icon(Icons.camera_alt_rounded),
+                      onTap: () => _openCharacterPlacementSettings(context),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.mouthTargetModeLabel,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SegmentedButton<MouthTargetMode>(
+                        segments: [
+                          ButtonSegment(
+                            value: MouthTargetMode.static,
+                            label: Text(l10n.mouthTargetStatic),
+                          ),
+                          ButtonSegment(
+                            value: MouthTargetMode.dynamic,
+                            label: Text(l10n.mouthTargetDynamic),
+                          ),
+                        ],
+                        selected: {settings.mouthTargetMode},
+                        onSelectionChanged: (selection) => _update(
+                          settings.copyWith(mouthTargetMode: selection.first),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      l10n.plaqueVisualStyleLabel,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SegmentedButton<PlaqueVisualStyle>(
+                        segments: [
+                          ButtonSegment(
+                            value: PlaqueVisualStyle.dots,
+                            label: Text(l10n.plaqueVisualDots),
+                          ),
+                          ButtonSegment(
+                            value: PlaqueVisualStyle.bacteria,
+                            label: Text(l10n.plaqueVisualBacteria),
+                          ),
+                          ButtonSegment(
+                            value: PlaqueVisualStyle.food,
+                            label: Text(l10n.plaqueVisualFood),
+                          ),
+                        ],
+                        selected: {settings.plaqueVisualStyle},
+                        onSelectionChanged: (selection) => _update(
+                          settings.copyWith(plaqueVisualStyle: selection.first),
+                        ),
+                      ),
+                    ),
+                    if (settings.plaqueVisualStyle == PlaqueVisualStyle.food)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: SegmentedButton<FoodVisualCategory>(
+                            segments: [
+                              ButtonSegment(
+                                value: FoodVisualCategory.everything,
+                                label: Text(l10n.foodCategoryEverything),
+                              ),
+                              ButtonSegment(
+                                value: FoodVisualCategory.vegetarian,
+                                label: Text(l10n.foodCategoryVegetarian),
+                              ),
+                              ButtonSegment(
+                                value: FoodVisualCategory.vegan,
+                                label: Text(l10n.foodCategoryVegan),
+                              ),
+                            ],
+                            selected: {settings.foodVisualCategory},
+                            onSelectionChanged: (selection) => _update(
+                              settings.copyWith(
+                                foodVisualCategory: selection.first,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),

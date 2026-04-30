@@ -203,6 +203,36 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tune character and tracking positions against the live camera.';
 
   @override
+  String get mouthTargetModeLabel => 'Mouth target';
+
+  @override
+  String get mouthTargetStatic => 'Static';
+
+  @override
+  String get mouthTargetDynamic => 'Dynamic';
+
+  @override
+  String get plaqueVisualStyleLabel => 'Bacteria look';
+
+  @override
+  String get plaqueVisualDots => 'Dots';
+
+  @override
+  String get plaqueVisualBacteria => 'Bacteria';
+
+  @override
+  String get plaqueVisualFood => 'Food';
+
+  @override
+  String get foodCategoryEverything => 'Everything';
+
+  @override
+  String get foodCategoryVegetarian => 'Vegetarian';
+
+  @override
+  String get foodCategoryVegan => 'Vegan';
+
+  @override
   String get foxEarHeightLabel => 'Fox ear height';
 
   @override

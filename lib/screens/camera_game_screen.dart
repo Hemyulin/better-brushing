@@ -32,6 +32,51 @@ class CameraGameScreen extends StatefulWidget {
   State<CameraGameScreen> createState() => _CameraGameScreenState();
 }
 
+const List<int> _mouthLandmarkIndices = <int>[
+  0,
+  13,
+  14,
+  17,
+  37,
+  39,
+  40,
+  61,
+  78,
+  80,
+  81,
+  82,
+  84,
+  87,
+  88,
+  91,
+  95,
+  146,
+  178,
+  181,
+  185,
+  191,
+  267,
+  269,
+  270,
+  291,
+  308,
+  310,
+  311,
+  312,
+  314,
+  317,
+  318,
+  321,
+  324,
+  375,
+  402,
+  405,
+  409,
+  415,
+];
+
+const int _maxMouthLandmarkIndex = 415;
+
 class _CameraGameScreenState extends State<CameraGameScreen>
     with TickerProviderStateMixin {
   late final BrushingSessionController _controller;
@@ -41,7 +86,9 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   CameraController? _cameraController;
   Future<void>? _cameraFuture;
   FaceDetectorProcessor? _faceDetector;
+  FaceMeshProcessor? _faceMesh;
   Rect? _trackedFaceBounds;
+  Rect? _trackedMouthBounds;
   late BrushingZone _lastAnimatedZone;
   DateTime _lastFaceFrameStartedAt = DateTime.fromMillisecondsSinceEpoch(0);
   bool _isProcessingFaceFrame = false;
@@ -131,6 +178,13 @@ class _CameraGameScreenState extends State<CameraGameScreen>
         roiScaleY: 1.7,
         roiShiftY: -0.2,
       );
+      if (widget.settings.mouthTargetMode == MouthTargetMode.dynamic) {
+        _faceMesh ??= await FaceMeshProcessor.create(
+          delegate: FaceMeshDelegate.xnnpack,
+          minDetectionConfidence: 0.45,
+          minTrackingConfidence: 0.45,
+        );
+      }
       await controller.startImageStream(_processCameraImage);
       _isStreamingCameraImages = true;
     } catch (_) {
@@ -148,11 +202,17 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     }
 
     final detector = _faceDetector;
+    final faceMesh = _faceMesh;
     final controller = _cameraController;
+    final tracksMouth =
+        widget.settings.mouthTargetMode == MouthTargetMode.dynamic;
     final rotationDegrees = controller == null
         ? null
         : _rotationCompensationDegrees(controller);
-    if (detector == null || controller == null || rotationDegrees == null) {
+    if (detector == null ||
+        (tracksMouth && faceMesh == null) ||
+        controller == null ||
+        rotationDegrees == null) {
       return;
     }
 
@@ -162,6 +222,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       final isFrontCamera =
           controller.description.lensDirection == CameraLensDirection.front;
       FaceDetectionResult? result;
+      FaceMeshResult? meshResult;
       if (Platform.isAndroid) {
         final nv21Image = FaceMeshCameraImageAdapter.toNv21(image);
         if (nv21Image == null) {
@@ -172,6 +233,14 @@ class _CameraGameScreenState extends State<CameraGameScreen>
           rotationDegrees: rotationDegrees,
           mirrorHorizontal: isFrontCamera,
         );
+        if (tracksMouth) {
+          meshResult = faceMesh!.processNv21(
+            nv21Image,
+            roi: result.primaryDetection?.expandedFaceRect,
+            rotationDegrees: rotationDegrees,
+            mirrorHorizontal: isFrontCamera,
+          );
+        }
       } else if (Platform.isIOS) {
         final bgraImage = FaceMeshCameraImageAdapter.toBgra(image);
         if (bgraImage == null) {
@@ -182,9 +251,18 @@ class _CameraGameScreenState extends State<CameraGameScreen>
           rotationDegrees: rotationDegrees,
           mirrorHorizontal: isFrontCamera,
         );
+        if (tracksMouth) {
+          meshResult = faceMesh!.process(
+            bgraImage,
+            roi: result.primaryDetection?.expandedFaceRect,
+            rotationDegrees: rotationDegrees,
+            mirrorHorizontal: isFrontCamera,
+          );
+        }
       }
 
       final faceBounds = _faceBoundsFromDetection(result?.primaryDetection);
+      final mouthBounds = tracksMouth ? _mouthBoundsFromMesh(meshResult) : null;
       final adjustedFaceBounds = faceBounds == null
           ? null
           : _shiftFaceBounds(
@@ -200,11 +278,16 @@ class _CameraGameScreenState extends State<CameraGameScreen>
           _trackedFaceBounds,
           adjustedFaceBounds,
         );
+        _trackedMouthBounds = _smoothFaceBounds(
+          _trackedMouthBounds,
+          mouthBounds,
+        );
       });
     } catch (_) {
       if (mounted) {
         setState(() {
           _trackedFaceBounds = null;
+          _trackedMouthBounds = null;
         });
       }
     } finally {
@@ -236,11 +319,53 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       return null;
     }
 
-    return Rect.fromLTRB(
+    final detectedFace = Rect.fromLTRB(
       detection.left.clamp(0.0, 1.0),
       detection.top.clamp(0.0, 1.0),
       detection.right.clamp(0.0, 1.0),
       detection.bottom.clamp(0.0, 1.0),
+    );
+    return _expandDetectedFaceToHeadBounds(detectedFace);
+  }
+
+  Rect _expandDetectedFaceToHeadBounds(Rect face) {
+    final horizontalOutset = face.width * 0.06;
+    final topOutset = face.height * 0.34;
+    final bottomOutset = face.height * 0.05;
+    return Rect.fromLTRB(
+      (face.left - horizontalOutset).clamp(0.0, 1.0),
+      (face.top - topOutset).clamp(0.0, 1.0),
+      (face.right + horizontalOutset).clamp(0.0, 1.0),
+      (face.bottom + bottomOutset).clamp(0.0, 1.0),
+    );
+  }
+
+  Rect? _mouthBoundsFromMesh(FaceMeshResult? result) {
+    if (result == null || result.landmarks.length <= _maxMouthLandmarkIndex) {
+      return null;
+    }
+
+    var left = double.infinity;
+    var top = double.infinity;
+    var right = double.negativeInfinity;
+    var bottom = double.negativeInfinity;
+    for (final index in _mouthLandmarkIndices) {
+      final landmark = result.landmarks[index];
+      left = math.min(left, landmark.x);
+      top = math.min(top, landmark.y);
+      right = math.max(right, landmark.x);
+      bottom = math.max(bottom, landmark.y);
+    }
+
+    final lipBounds = Rect.fromLTRB(left, top, right, bottom);
+    final horizontalOutset = lipBounds.width * 0.5;
+    final topOutset = lipBounds.height * 0.25;
+    final bottomOutset = lipBounds.height * 0.35;
+    return Rect.fromLTRB(
+      (lipBounds.left - horizontalOutset).clamp(0.0, 1.0),
+      (lipBounds.top - topOutset).clamp(0.0, 1.0),
+      (lipBounds.right + horizontalOutset).clamp(0.0, 1.0),
+      (lipBounds.bottom + bottomOutset).clamp(0.0, 1.0),
     );
   }
 
@@ -297,6 +422,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       _cameraController?.stopImageStream();
     }
     _faceDetector?.close();
+    _faceMesh?.close();
     _controller
       ..removeListener(_handleSessionChanged)
       ..dispose();
@@ -355,6 +481,14 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                                 zone: _controller.currentZone,
                                 remainingPlaque: _controller.remainingPlaque,
                                 color: _themeColor,
+                                visualStyle: widget.settings.plaqueVisualStyle,
+                                foodCategory:
+                                    widget.settings.foodVisualCategory,
+                                mouthBounds:
+                                    widget.settings.mouthTargetMode ==
+                                        MouthTargetMode.dynamic
+                                    ? _trackedMouthBounds
+                                    : null,
                               ),
                             ),
                             if (_controller.isPaused)
@@ -506,6 +640,13 @@ class CharacterThemeOverlay extends StatelessWidget {
   }
 }
 
+double _clampOverlayValue(double value, double min, double max) {
+  if (max < min) {
+    return (min + max) / 2;
+  }
+  return value.clamp(min, max).toDouble();
+}
+
 class _FoxThemeOverlay extends StatelessWidget {
   const _FoxThemeOverlay({
     required this.faceBounds,
@@ -529,15 +670,12 @@ class _FoxThemeOverlay extends StatelessWidget {
         final faceWidth = face == null
             ? constraints.maxWidth * 0.54
             : face.width * constraints.maxWidth;
-        final faceHeight = face == null
-            ? constraints.maxHeight * 0.34
-            : face.height * constraints.maxHeight;
         final headCenterX = face == null
             ? constraints.maxWidth * 0.5
             : face.center.dx * constraints.maxWidth;
         final headTop = face == null
             ? constraints.maxHeight * 0.18
-            : (face.top * constraints.maxHeight - faceHeight * 0.82);
+            : face.top * constraints.maxHeight;
         final sideOverflow = earWidth * 0.95;
         final maxEarGap = math.max(
           110.0,
@@ -547,16 +685,19 @@ class _FoxThemeOverlay extends StatelessWidget {
           110.0,
           maxEarGap,
         );
-        final earTop =
-            (headTop -
-                    earHeight * 1.02 +
-                    earHeightOffset * constraints.maxHeight * 0.16)
-                .clamp(8.0, constraints.maxHeight - earHeight);
+        final earTop = _clampOverlayValue(
+          headTop -
+              earHeight * 1.22 +
+              earHeightOffset * constraints.maxHeight * 0.16,
+          8.0,
+          constraints.maxHeight - earHeight,
+        );
         final outwardTurn =
             math.sin(Curves.easeInOut.transform(zoneChangeProgress) * math.pi) *
             0.48;
         final groupWidth = earGap + earWidth;
-        final clampedHeadCenterX = headCenterX.clamp(
+        final clampedHeadCenterX = _clampOverlayValue(
+          headCenterX,
           groupWidth / 2 - sideOverflow,
           constraints.maxWidth - groupWidth / 2 + sideOverflow,
         );
@@ -605,31 +746,36 @@ class _GatorThemeOverlay extends StatelessWidget {
         final faceWidth = face == null
             ? constraints.maxWidth * 0.54
             : face.width * constraints.maxWidth;
-        final faceHeight = face == null
-            ? constraints.maxHeight * 0.34
-            : face.height * constraints.maxHeight;
         final headCenterX = face == null
             ? constraints.maxWidth * 0.5
             : face.center.dx * constraints.maxWidth +
                   horizontalOffset * constraints.maxWidth * 0.18;
         final headTop = face == null
             ? constraints.maxHeight * 0.18
-            : (face.top * constraints.maxHeight -
-                  faceHeight * 0.82 +
-                  verticalOffset * constraints.maxHeight * 0.16);
+            : face.top * constraints.maxHeight +
+                  verticalOffset * constraints.maxHeight * 0.16;
         final browWidth = face == null
             ? constraints.maxWidth - 36
-            : (faceWidth * 1.78).clamp(250.0, constraints.maxWidth - 16);
+            : _clampOverlayValue(
+                faceWidth * 1.78,
+                250.0,
+                constraints.maxWidth - 16,
+              );
         final browHeight = browWidth / 3.4;
         final browLeft = face == null
             ? 18.0
-            : (headCenterX - browWidth / 2).clamp(
+            : _clampOverlayValue(
+                headCenterX - browWidth / 2,
                 18.0,
                 constraints.maxWidth - browWidth - 18,
               );
         final browTop = face == null
             ? 24.0
-            : headTop.clamp(8.0, constraints.maxHeight - browHeight);
+            : _clampOverlayValue(
+                headTop - browHeight * 0.96,
+                8.0,
+                constraints.maxHeight - browHeight,
+              );
         final happyEyes = math.sin(zoneChangeProgress * math.pi);
 
         return Stack(
@@ -652,11 +798,17 @@ class _BrushingGuideOverlay extends StatelessWidget {
     required this.zone,
     required this.remainingPlaque,
     required this.color,
+    required this.visualStyle,
+    required this.foodCategory,
+    required this.mouthBounds,
   });
 
   final BrushingZone zone;
   final int remainingPlaque;
   final Color color;
+  final PlaqueVisualStyle visualStyle;
+  final FoodVisualCategory foodCategory;
+  final Rect? mouthBounds;
 
   @override
   Widget build(BuildContext context) {
@@ -666,6 +818,9 @@ class _BrushingGuideOverlay extends StatelessWidget {
           zone: zone,
           remainingPlaque: remainingPlaque,
           color: color,
+          visualStyle: visualStyle,
+          foodCategory: foodCategory,
+          mouthBounds: mouthBounds,
         ),
       ),
     );
@@ -677,11 +832,17 @@ class _BrushingGuidePainter extends CustomPainter {
     required this.zone,
     required this.remainingPlaque,
     required this.color,
+    required this.visualStyle,
+    required this.foodCategory,
+    required this.mouthBounds,
   });
 
   final BrushingZone zone;
   final int remainingPlaque;
   final Color color;
+  final PlaqueVisualStyle visualStyle;
+  final FoodVisualCategory foodCategory;
+  final Rect? mouthBounds;
 
   static const _offsets = <Offset>[
     Offset(-0.22, -0.18),
@@ -696,11 +857,19 @@ class _BrushingGuidePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final mouthArea = Rect.fromCenter(
-      center: Offset(size.width * 0.5, size.height * 0.56),
-      width: size.width * 0.46,
-      height: size.height * 0.22,
-    );
+    final trackedMouth = mouthBounds;
+    final mouthArea = trackedMouth == null
+        ? Rect.fromCenter(
+            center: Offset(size.width * 0.5, size.height * 0.56),
+            width: size.width * 0.46,
+            height: size.height * 0.22,
+          )
+        : Rect.fromLTRB(
+            trackedMouth.left * size.width,
+            trackedMouth.top * size.height,
+            trackedMouth.right * size.width,
+            trackedMouth.bottom * size.height,
+          );
 
     final zoneRect = switch (zone) {
       BrushingZone.topLeft => Rect.fromLTWH(
@@ -767,12 +936,25 @@ class _BrushingGuidePainter extends CustomPainter {
         zoneRect.center.dx + zoneRect.width * _offsets[i].dx,
         zoneRect.center.dy + zoneRect.height * _offsets[i].dy,
       );
-      final radius = i.isEven ? zoneRect.width * 0.11 : zoneRect.width * 0.095;
-      _paintPlaque(canvas, center, radius);
+      final baseRadius = i.isEven
+          ? zoneRect.width * 0.11
+          : zoneRect.width * 0.095;
+      _paintPlaque(canvas, center, baseRadius, i);
     }
   }
 
-  void _paintPlaque(Canvas canvas, Offset center, double radius) {
+  void _paintPlaque(Canvas canvas, Offset center, double radius, int index) {
+    switch (visualStyle) {
+      case PlaqueVisualStyle.dots:
+        _paintPlaqueDot(canvas, center, radius);
+      case PlaqueVisualStyle.bacteria:
+        _paintBacteria(canvas, center, radius * 1.35, index);
+      case PlaqueVisualStyle.food:
+        _paintFood(canvas, center, radius * 1.4, index);
+    }
+  }
+
+  void _paintPlaqueDot(Canvas canvas, Offset center, double radius) {
     canvas.drawCircle(center, radius, Paint()..color = const Color(0xFFFFF4C1));
     canvas.drawCircle(
       center,
@@ -789,11 +971,120 @@ class _BrushingGuidePainter extends CustomPainter {
     );
   }
 
+  void _paintBacteria(Canvas canvas, Offset center, double radius, int index) {
+    final bodyPaint = Paint()
+      ..color = _bacteriaColor(index)
+      ..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..color = const Color(0xFF31513E).withValues(alpha: 0.75)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(1.4, radius * 0.14)
+      ..strokeCap = StrokeCap.round;
+    final angle = (index - 2) * 0.34;
+    final body = Rect.fromCenter(
+      center: center,
+      width: radius * 1.8,
+      height: radius * 1.18,
+    );
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle);
+    canvas.translate(-center.dx, -center.dy);
+
+    for (var i = 0; i < 8; i++) {
+      final theta = i * math.pi / 4;
+      final start =
+          center + Offset(math.cos(theta), math.sin(theta)) * radius * 0.82;
+      final end =
+          center + Offset(math.cos(theta), math.sin(theta)) * radius * 1.18;
+      canvas.drawLine(start, end, borderPaint);
+    }
+
+    canvas.drawOval(body, bodyPaint);
+    canvas.drawOval(body, borderPaint);
+    canvas.drawCircle(
+      center.translate(-radius * 0.28, -radius * 0.12),
+      radius * 0.16,
+      Paint()..color = Colors.white.withValues(alpha: 0.78),
+    );
+    canvas.drawCircle(
+      center.translate(radius * 0.28, radius * 0.08),
+      radius * 0.12,
+      Paint()..color = const Color(0xFF31513E).withValues(alpha: 0.42),
+    );
+
+    canvas.restore();
+  }
+
+  Color _bacteriaColor(int index) {
+    const colors = [
+      Color(0xFF8DDC7F),
+      Color(0xFFB4E66E),
+      Color(0xFF7DD8C7),
+      Color(0xFFC9E265),
+    ];
+    return colors[index % colors.length];
+  }
+
+  void _paintFood(Canvas canvas, Offset center, double radius, int index) {
+    final foods = _foodsForCategory();
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: foods[index % foods.length],
+        style: TextStyle(fontSize: radius * 1.75),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    textPainter.paint(
+      canvas,
+      center - Offset(textPainter.width / 2, textPainter.height / 2),
+    );
+  }
+
+  List<String> _foodsForCategory() {
+    return switch (foodCategory) {
+      FoodVisualCategory.everything => const [
+        '🥦',
+        '🧀',
+        '🍓',
+        '🥕',
+        '🍕',
+        '🍗',
+        '🍞',
+        '🥚',
+      ],
+      FoodVisualCategory.vegetarian => const [
+        '🥦',
+        '🧀',
+        '🍓',
+        '🥕',
+        '🍞',
+        '🥚',
+        '🍎',
+        '🥨',
+      ],
+      FoodVisualCategory.vegan => const [
+        '🥦',
+        '🍓',
+        '🥕',
+        '🍎',
+        '🍌',
+        '🌽',
+        '🥔',
+        '🍞',
+      ],
+    };
+  }
+
   @override
   bool shouldRepaint(covariant _BrushingGuidePainter oldDelegate) {
     return oldDelegate.zone != zone ||
         oldDelegate.remainingPlaque != remainingPlaque ||
-        oldDelegate.color != color;
+        oldDelegate.color != color ||
+        oldDelegate.visualStyle != visualStyle ||
+        oldDelegate.foodCategory != foodCategory ||
+        oldDelegate.mouthBounds != mouthBounds;
   }
 }
 
@@ -807,11 +1098,11 @@ class _FoxEarDecoration extends StatelessWidget {
   Widget build(BuildContext context) {
     final turnDirection = flip ? -1.0 : 1.0;
     return Transform(
-      alignment: flip ? Alignment.centerLeft : Alignment.centerRight,
+      alignment: Alignment.center,
       transform: Matrix4.identity()
         ..setEntry(3, 2, 0.001)
         ..rotateY(outwardTurn * turnDirection)
-        ..multiply(Matrix4.diagonal3Values(flip ? -1.0 : 1.0, 1.0, 1.0)),
+        ..scaleByDouble(flip ? -1.0 : 1.0, 1.0, 1.0, 1.0),
       child: CustomPaint(size: const Size(74, 88), painter: _FoxEarPainter()),
     );
   }

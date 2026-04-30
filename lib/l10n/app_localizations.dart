@@ -458,6 +458,66 @@ abstract class AppLocalizations {
   /// **'Tune character and tracking positions against the live camera.'**
   String get characterPlacementDescription;
 
+  /// No description provided for @mouthTargetModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mouth target'**
+  String get mouthTargetModeLabel;
+
+  /// No description provided for @mouthTargetStatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Static'**
+  String get mouthTargetStatic;
+
+  /// No description provided for @mouthTargetDynamic.
+  ///
+  /// In en, this message translates to:
+  /// **'Dynamic'**
+  String get mouthTargetDynamic;
+
+  /// No description provided for @plaqueVisualStyleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Bacteria look'**
+  String get plaqueVisualStyleLabel;
+
+  /// No description provided for @plaqueVisualDots.
+  ///
+  /// In en, this message translates to:
+  /// **'Dots'**
+  String get plaqueVisualDots;
+
+  /// No description provided for @plaqueVisualBacteria.
+  ///
+  /// In en, this message translates to:
+  /// **'Bacteria'**
+  String get plaqueVisualBacteria;
+
+  /// No description provided for @plaqueVisualFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food'**
+  String get plaqueVisualFood;
+
+  /// No description provided for @foodCategoryEverything.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get foodCategoryEverything;
+
+  /// No description provided for @foodCategoryVegetarian.
+  ///
+  /// In en, this message translates to:
+  /// **'Vegetarian'**
+  String get foodCategoryVegetarian;
+
+  /// No description provided for @foodCategoryVegan.
+  ///
+  /// In en, this message translates to:
+  /// **'Vegan'**
+  String get foodCategoryVegan;
+
   /// No description provided for @foxEarHeightLabel.
   ///
   /// In en, this message translates to:

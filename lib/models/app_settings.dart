@@ -6,12 +6,21 @@ enum AppLanguage { system, english, german }
 
 enum PauseControl { screen, volumeButtons, screenAndVolumeButtons }
 
+enum MouthTargetMode { static, dynamic }
+
+enum PlaqueVisualStyle { dots, bacteria, food }
+
+enum FoodVisualCategory { everything, vegetarian, vegan }
+
 class AppSettings {
   const AppSettings({
     this.brushingDurationSeconds = 120,
     this.language = AppLanguage.system,
     this.pauseControl = PauseControl.screen,
     this.pauseLockEnabled = false,
+    this.mouthTargetMode = MouthTargetMode.dynamic,
+    this.plaqueVisualStyle = PlaqueVisualStyle.dots,
+    this.foodVisualCategory = FoodVisualCategory.everything,
     this.zoneOrder = defaultZoneOrder,
     this.foxEarHeightOffset = 0,
     this.foxEarSpacingOffset = 0,
@@ -32,6 +41,9 @@ class AppSettings {
   final AppLanguage language;
   final PauseControl pauseControl;
   final bool pauseLockEnabled;
+  final MouthTargetMode mouthTargetMode;
+  final PlaqueVisualStyle plaqueVisualStyle;
+  final FoodVisualCategory foodVisualCategory;
   final List<BrushingZone> zoneOrder;
   final double foxEarHeightOffset;
   final double foxEarSpacingOffset;
@@ -65,6 +77,9 @@ class AppSettings {
     AppLanguage? language,
     PauseControl? pauseControl,
     bool? pauseLockEnabled,
+    MouthTargetMode? mouthTargetMode,
+    PlaqueVisualStyle? plaqueVisualStyle,
+    FoodVisualCategory? foodVisualCategory,
     List<BrushingZone>? zoneOrder,
     double? foxEarHeightOffset,
     double? foxEarSpacingOffset,
@@ -79,6 +94,9 @@ class AppSettings {
       language: language ?? this.language,
       pauseControl: pauseControl ?? this.pauseControl,
       pauseLockEnabled: pauseLockEnabled ?? this.pauseLockEnabled,
+      mouthTargetMode: mouthTargetMode ?? this.mouthTargetMode,
+      plaqueVisualStyle: plaqueVisualStyle ?? this.plaqueVisualStyle,
+      foodVisualCategory: foodVisualCategory ?? this.foodVisualCategory,
       zoneOrder: zoneOrder ?? this.zoneOrder,
       foxEarHeightOffset: foxEarHeightOffset ?? this.foxEarHeightOffset,
       foxEarSpacingOffset: foxEarSpacingOffset ?? this.foxEarSpacingOffset,
@@ -98,6 +116,9 @@ class AppSettings {
       'language': language.name,
       'pauseControl': pauseControl.name,
       'pauseLockEnabled': pauseLockEnabled,
+      'mouthTargetMode': mouthTargetMode.name,
+      'plaqueVisualStyle': plaqueVisualStyle.name,
+      'foodVisualCategory': foodVisualCategory.name,
       'zoneOrder': zoneOrder.map((zone) => zone.name).toList(),
       'foxEarHeightOffset': foxEarHeightOffset,
       'foxEarSpacingOffset': foxEarSpacingOffset,
@@ -122,6 +143,21 @@ class AppSettings {
         PauseControl.screen,
       ),
       pauseLockEnabled: json['pauseLockEnabled'] == true,
+      mouthTargetMode: _readEnum(
+        MouthTargetMode.values,
+        json['mouthTargetMode'],
+        MouthTargetMode.dynamic,
+      ),
+      plaqueVisualStyle: _readEnum(
+        PlaqueVisualStyle.values,
+        json['plaqueVisualStyle'],
+        PlaqueVisualStyle.dots,
+      ),
+      foodVisualCategory: _readEnum(
+        FoodVisualCategory.values,
+        json['foodVisualCategory'],
+        FoodVisualCategory.everything,
+      ),
       zoneOrder: _readZoneOrder(json),
       foxEarHeightOffset: _readCharacterOffset(json['foxEarHeightOffset']),
       foxEarSpacingOffset: _readCharacterOffset(json['foxEarSpacingOffset']),

@@ -200,11 +200,24 @@ class _CharacterPlacementSettingsScreenState
       return null;
     }
 
-    return Rect.fromLTRB(
+    final detectedFace = Rect.fromLTRB(
       detection.left.clamp(0.0, 1.0),
       detection.top.clamp(0.0, 1.0),
       detection.right.clamp(0.0, 1.0),
       detection.bottom.clamp(0.0, 1.0),
+    );
+    return _expandDetectedFaceToHeadBounds(detectedFace);
+  }
+
+  Rect _expandDetectedFaceToHeadBounds(Rect face) {
+    final horizontalOutset = face.width * 0.06;
+    final topOutset = face.height * 0.34;
+    final bottomOutset = face.height * 0.05;
+    return Rect.fromLTRB(
+      (face.left - horizontalOutset).clamp(0.0, 1.0),
+      (face.top - topOutset).clamp(0.0, 1.0),
+      (face.right + horizontalOutset).clamp(0.0, 1.0),
+      (face.bottom + bottomOutset).clamp(0.0, 1.0),
     );
   }
 

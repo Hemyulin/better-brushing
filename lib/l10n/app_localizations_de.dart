@@ -203,6 +203,36 @@ class AppLocalizationsDe extends AppLocalizations {
       'Figuren und Tracking direkt mit der Live-Kamera ausrichten.';
 
   @override
+  String get mouthTargetModeLabel => 'Mund-Ziel';
+
+  @override
+  String get mouthTargetStatic => 'Statisch';
+
+  @override
+  String get mouthTargetDynamic => 'Dynamisch';
+
+  @override
+  String get plaqueVisualStyleLabel => 'Bakterien-Look';
+
+  @override
+  String get plaqueVisualDots => 'Punkte';
+
+  @override
+  String get plaqueVisualBacteria => 'Bakterien';
+
+  @override
+  String get plaqueVisualFood => 'Essen';
+
+  @override
+  String get foodCategoryEverything => 'Alles';
+
+  @override
+  String get foodCategoryVegetarian => 'Vegetarisch';
+
+  @override
+  String get foodCategoryVegan => 'Vegan';
+
+  @override
   String get foxEarHeightLabel => 'Höhe der Fuchsohren';
 
   @override
