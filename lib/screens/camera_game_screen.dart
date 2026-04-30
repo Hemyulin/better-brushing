@@ -360,8 +360,8 @@ class _CameraGameScreenState extends State<CameraGameScreen>
 
     final lipBounds = Rect.fromLTRB(left, top, right, bottom);
     final horizontalOutset = lipBounds.width * 0.5;
-    final topOutset = lipBounds.height * 0.25;
-    final bottomOutset = lipBounds.height * 0.35;
+    final topOutset = lipBounds.height * 0.9 + lipBounds.width * 0.08;
+    final bottomOutset = lipBounds.height * 0.12;
     return Rect.fromLTRB(
       (lipBounds.left - horizontalOutset).clamp(0.0, 1.0),
       (lipBounds.top - topOutset).clamp(0.0, 1.0),
