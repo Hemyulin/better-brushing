@@ -360,8 +360,8 @@ class _CameraGameScreenState extends State<CameraGameScreen>
 
     final lipBounds = Rect.fromLTRB(left, top, right, bottom);
     final horizontalOutset = lipBounds.width * 0.5;
-    final topOutset = lipBounds.height * 0.9 + lipBounds.width * 0.08;
-    final bottomOutset = lipBounds.height * 0.12;
+    final topOutset = lipBounds.height * 1.05 + lipBounds.width * 0.1;
+    final bottomOutset = lipBounds.height * 0.08;
     return Rect.fromLTRB(
       (lipBounds.left - horizontalOutset).clamp(0.0, 1.0),
       (lipBounds.top - topOutset).clamp(0.0, 1.0),
@@ -1013,9 +1013,9 @@ class _BrushingGuidePainter extends CustomPainter {
       case PlaqueVisualStyle.dots:
         _paintPlaqueDot(canvas, center, radius);
       case PlaqueVisualStyle.bacteria:
-        _paintBacteria(canvas, center, radius * 1.35, index);
+        _paintBacteria(canvas, center, radius * 1.55, index);
       case PlaqueVisualStyle.food:
-        _paintFood(canvas, center, radius * 1.4, index);
+        _paintFood(canvas, center, radius * 1.65, index);
     }
   }
 
