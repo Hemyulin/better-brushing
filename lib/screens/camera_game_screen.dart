@@ -90,6 +90,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   Rect? _trackedFaceBounds;
   Rect? _trackedMouthBounds;
   late BrushingZone _lastAnimatedZone;
+  BrushingZone? _transitionFromZone;
   DateTime _lastFaceFrameStartedAt = DateTime.fromMillisecondsSinceEpoch(0);
   bool _isProcessingFaceFrame = false;
   bool _isStreamingCameraImages = false;
@@ -408,6 +409,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     }
     if (_controller.phase == SessionPhase.brushing &&
         _controller.currentZone != _lastAnimatedZone) {
+      _transitionFromZone = _lastAnimatedZone;
       _lastAnimatedZone = _controller.currentZone;
       _zoneChangeAnimation.forward(from: 0);
     }
@@ -489,6 +491,8 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                                         MouthTargetMode.dynamic
                                     ? _trackedMouthBounds
                                     : null,
+                                previousZone: _transitionFromZone,
+                                zoneChangeAnimation: _zoneChangeAnimation,
                               ),
                             ),
                             if (_controller.isPaused)
@@ -801,6 +805,8 @@ class _BrushingGuideOverlay extends StatelessWidget {
     required this.visualStyle,
     required this.foodCategory,
     required this.mouthBounds,
+    required this.previousZone,
+    required this.zoneChangeAnimation,
   });
 
   final BrushingZone zone;
@@ -809,6 +815,8 @@ class _BrushingGuideOverlay extends StatelessWidget {
   final PlaqueVisualStyle visualStyle;
   final FoodVisualCategory foodCategory;
   final Rect? mouthBounds;
+  final BrushingZone? previousZone;
+  final Animation<double> zoneChangeAnimation;
 
   @override
   Widget build(BuildContext context) {
@@ -821,6 +829,8 @@ class _BrushingGuideOverlay extends StatelessWidget {
           visualStyle: visualStyle,
           foodCategory: foodCategory,
           mouthBounds: mouthBounds,
+          previousZone: previousZone,
+          zoneChangeAnimation: zoneChangeAnimation,
         ),
       ),
     );
@@ -828,14 +838,16 @@ class _BrushingGuideOverlay extends StatelessWidget {
 }
 
 class _BrushingGuidePainter extends CustomPainter {
-  const _BrushingGuidePainter({
+  _BrushingGuidePainter({
     required this.zone,
     required this.remainingPlaque,
     required this.color,
     required this.visualStyle,
     required this.foodCategory,
     required this.mouthBounds,
-  });
+    required this.previousZone,
+    required this.zoneChangeAnimation,
+  }) : super(repaint: zoneChangeAnimation);
 
   final BrushingZone zone;
   final int remainingPlaque;
@@ -843,6 +855,8 @@ class _BrushingGuidePainter extends CustomPainter {
   final PlaqueVisualStyle visualStyle;
   final FoodVisualCategory foodCategory;
   final Rect? mouthBounds;
+  final BrushingZone? previousZone;
+  final Animation<double> zoneChangeAnimation;
 
   static const _offsets = <Offset>[
     Offset(-0.22, -0.18),
@@ -871,7 +885,56 @@ class _BrushingGuidePainter extends CustomPainter {
             trackedMouth.bottom * size.height,
           );
 
-    final zoneRect = switch (zone) {
+    final zoneRect = _rectForZone(mouthArea, zone).deflate(6);
+
+    final guidePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.14)
+      ..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.88)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(mouthArea, const Radius.circular(36)),
+      Paint()
+        ..color = color.withValues(alpha: 0.12)
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(mouthArea, const Radius.circular(36)),
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2,
+    );
+    _paintZoneTransition(canvas, mouthArea, zoneRect);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(zoneRect, const Radius.circular(26)),
+      guidePaint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(zoneRect, const Radius.circular(26)),
+      borderPaint,
+    );
+
+    for (var i = 0; i < _offsets.length; i++) {
+      if (i >= remainingPlaque) {
+        continue;
+      }
+      final center = Offset(
+        zoneRect.center.dx + zoneRect.width * _offsets[i].dx,
+        zoneRect.center.dy + zoneRect.height * _offsets[i].dy,
+      );
+      final baseRadius = i.isEven
+          ? zoneRect.width * 0.11
+          : zoneRect.width * 0.095;
+      _paintPlaque(canvas, center, baseRadius, i);
+    }
+  }
+
+  Rect _rectForZone(Rect mouthArea, BrushingZone zone) {
+    return switch (zone) {
       BrushingZone.topLeft => Rect.fromLTWH(
         mouthArea.left,
         mouthArea.top,
@@ -896,51 +959,53 @@ class _BrushingGuidePainter extends CustomPainter {
         mouthArea.width / 2,
         mouthArea.height / 2,
       ),
-    }.deflate(6);
+    };
+  }
 
-    final guidePaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.14)
-      ..style = PaintingStyle.fill;
-    final borderPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.88)
+  void _paintZoneTransition(Canvas canvas, Rect mouthArea, Rect zoneRect) {
+    final previous = previousZone;
+    final rawProgress = zoneChangeAnimation.value;
+    if (previous == null || previous == zone || rawProgress >= 1) {
+      return;
+    }
+
+    final fade = 1 - Curves.easeIn.transform(rawProgress);
+    final pulseProgress = Curves.easeOutCubic.transform(rawProgress);
+    final pulseWave = math.sin(rawProgress * math.pi);
+    final pulseRect = zoneRect.inflate(10 + 18 * pulseWave);
+    final pulsePaint = Paint()
+      ..color = color.withValues(alpha: 0.22 * fade)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-
+      ..strokeWidth = 4 + 5 * pulseWave;
     canvas.drawRRect(
-      RRect.fromRectAndRadius(mouthArea, const Radius.circular(36)),
+      RRect.fromRectAndRadius(pulseRect, const Radius.circular(32)),
+      pulsePaint,
+    );
+
+    final fromRect = _rectForZone(mouthArea, previous).deflate(6);
+    final fromCenter = fromRect.center;
+    final toCenter = zoneRect.center;
+    final sweepProgress = Curves.easeInOutCubic.transform(
+      (rawProgress / 0.72).clamp(0.0, 1.0).toDouble(),
+    );
+    final sweepHead = Offset.lerp(fromCenter, toCenter, sweepProgress)!;
+    final sweepPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.46 * fade)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 8 + 5 * pulseWave
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(fromCenter, sweepHead, sweepPaint);
+    canvas.drawCircle(
+      sweepHead,
+      8 + 10 * pulseWave + 6 * pulseProgress,
+      Paint()..color = Colors.white.withValues(alpha: 0.32 * fade),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(fromRect, const Radius.circular(24)),
       Paint()
-        ..color = color.withValues(alpha: 0.12)
+        ..color = Colors.white.withValues(alpha: 0.1 * fade)
         ..style = PaintingStyle.fill,
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(mouthArea, const Radius.circular(36)),
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.5)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(zoneRect, const Radius.circular(26)),
-      guidePaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(zoneRect, const Radius.circular(26)),
-      borderPaint,
-    );
-
-    for (var i = 0; i < _offsets.length; i++) {
-      if (i >= remainingPlaque) {
-        continue;
-      }
-      final center = Offset(
-        zoneRect.center.dx + zoneRect.width * _offsets[i].dx,
-        zoneRect.center.dy + zoneRect.height * _offsets[i].dy,
-      );
-      final baseRadius = i.isEven
-          ? zoneRect.width * 0.11
-          : zoneRect.width * 0.095;
-      _paintPlaque(canvas, center, baseRadius, i);
-    }
   }
 
   void _paintPlaque(Canvas canvas, Offset center, double radius, int index) {
@@ -1084,7 +1149,9 @@ class _BrushingGuidePainter extends CustomPainter {
         oldDelegate.color != color ||
         oldDelegate.visualStyle != visualStyle ||
         oldDelegate.foodCategory != foodCategory ||
-        oldDelegate.mouthBounds != mouthBounds;
+        oldDelegate.mouthBounds != mouthBounds ||
+        oldDelegate.previousZone != previousZone ||
+        oldDelegate.zoneChangeAnimation != zoneChangeAnimation;
   }
 }
 
