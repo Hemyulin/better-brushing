@@ -534,6 +534,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                               Positioned.fill(
                                 child: _CountdownOverlay(
                                   remaining: _countdownRemaining!,
+                                  character: widget.character,
                                   color: _themeColor,
                                 ),
                               ),
@@ -1471,9 +1472,14 @@ class _PausedOverlay extends StatelessWidget {
 }
 
 class _CountdownOverlay extends StatelessWidget {
-  const _CountdownOverlay({required this.remaining, required this.color});
+  const _CountdownOverlay({
+    required this.remaining,
+    required this.character,
+    required this.color,
+  });
 
   final int remaining;
+  final BrushingCharacter character;
   final Color color;
 
   @override
@@ -1512,13 +1518,18 @@ class _CountdownOverlay extends StatelessWidget {
                   duration: const Duration(milliseconds: 220),
                   transitionBuilder: (child, animation) =>
                       ScaleTransition(scale: animation, child: child),
-                  child: Text(
-                    '$remaining',
+                  child: Wrap(
                     key: ValueKey(remaining),
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: color,
-                    ),
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      for (var i = 0; i < remaining; i++)
+                        Text(
+                          character.emoji,
+                          style: const TextStyle(fontSize: 48, height: 1.05),
+                        ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 6),
