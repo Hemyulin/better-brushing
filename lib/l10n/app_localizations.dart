@@ -302,6 +302,36 @@ abstract class AppLocalizations {
   /// **'{minutes} minutes'**
   String brushingDurationMinutes(String minutes);
 
+  /// No description provided for @startCountdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Start countdown'**
+  String get startCountdownLabel;
+
+  /// No description provided for @startCountdownOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get startCountdownOff;
+
+  /// No description provided for @startCountdownSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds}s'**
+  String startCountdownSeconds(int seconds);
+
+  /// No description provided for @countdownReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Get ready'**
+  String get countdownReady;
+
+  /// No description provided for @countdownStartsSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Brushing starts soon.'**
+  String get countdownStartsSoon;
+
   /// No description provided for @languageSettingsTitle.
   ///
   /// In en, this message translates to:

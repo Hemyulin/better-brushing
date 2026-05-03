@@ -48,6 +48,18 @@
       }
     }
   },
+  "startCountdownLabel": "Start countdown",
+  "startCountdownOff": "Off",
+  "startCountdownSeconds": "{seconds}s",
+  "@startCountdownSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "countdownReady": "Get ready",
+  "countdownStartsSoon": "Brushing starts soon.",
   "languageSettingsTitle": "Language",
   "languageSystem": "System",
   "languageEnglish": "English",

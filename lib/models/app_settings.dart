@@ -15,6 +15,7 @@ enum FoodVisualCategory { everything, vegetarian, vegan }
 class AppSettings {
   const AppSettings({
     this.brushingDurationSeconds = 120,
+    this.startCountdownSeconds = 3,
     this.language = AppLanguage.system,
     this.pauseControl = PauseControl.screen,
     this.pauseLockEnabled = false,
@@ -38,6 +39,7 @@ class AppSettings {
   ];
 
   final int brushingDurationSeconds;
+  final int startCountdownSeconds;
   final AppLanguage language;
   final PauseControl pauseControl;
   final bool pauseLockEnabled;
@@ -55,6 +57,7 @@ class AppSettings {
   static const minDurationSeconds = 60;
   static const maxDurationSeconds = 300;
   static const durationStepSeconds = 30;
+  static const countdownOptionsSeconds = [0, 3, 5, 10];
   static const minCharacterOffset = -1.0;
   static const maxCharacterOffset = 1.0;
 
@@ -74,6 +77,7 @@ class AppSettings {
 
   AppSettings copyWith({
     int? brushingDurationSeconds,
+    int? startCountdownSeconds,
     AppLanguage? language,
     PauseControl? pauseControl,
     bool? pauseLockEnabled,
@@ -91,6 +95,8 @@ class AppSettings {
     return AppSettings(
       brushingDurationSeconds:
           brushingDurationSeconds ?? this.brushingDurationSeconds,
+      startCountdownSeconds:
+          startCountdownSeconds ?? this.startCountdownSeconds,
       language: language ?? this.language,
       pauseControl: pauseControl ?? this.pauseControl,
       pauseLockEnabled: pauseLockEnabled ?? this.pauseLockEnabled,
@@ -113,6 +119,7 @@ class AppSettings {
   Map<String, Object> toJson() {
     return <String, Object>{
       'brushingDurationSeconds': brushingDurationSeconds,
+      'startCountdownSeconds': startCountdownSeconds,
       'language': language.name,
       'pauseControl': pauseControl.name,
       'pauseLockEnabled': pauseLockEnabled,
@@ -132,6 +139,7 @@ class AppSettings {
   factory AppSettings.fromJson(Map<String, Object?> json) {
     return AppSettings(
       brushingDurationSeconds: _readDuration(json['brushingDurationSeconds']),
+      startCountdownSeconds: _readCountdown(json['startCountdownSeconds']),
       language: _readEnum(
         AppLanguage.values,
         json['language'],
@@ -177,6 +185,11 @@ class AppSettings {
   static int _readDuration(Object? value) {
     final duration = value is num ? value.round() : 120;
     return duration.clamp(minDurationSeconds, maxDurationSeconds);
+  }
+
+  static int _readCountdown(Object? value) {
+    final seconds = value is num ? value.round() : 3;
+    return countdownOptionsSeconds.contains(seconds) ? seconds : 3;
   }
 
   static double _readCharacterOffset(Object? value) {

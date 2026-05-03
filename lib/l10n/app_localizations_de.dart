@@ -123,6 +123,23 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get startCountdownLabel => 'Start-Countdown';
+
+  @override
+  String get startCountdownOff => 'Aus';
+
+  @override
+  String startCountdownSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get countdownReady => 'Bereit machen';
+
+  @override
+  String get countdownStartsSoon => 'Gleich geht das Putzen los.';
+
+  @override
   String get languageSettingsTitle => 'Sprache';
 
   @override

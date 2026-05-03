@@ -61,6 +61,37 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 18),
+                    Text(
+                      l10n.startCountdownLabel,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SegmentedButton<int>(
+                        segments: [
+                          for (final seconds
+                              in AppSettings.countdownOptionsSeconds)
+                            ButtonSegment(
+                              value: seconds,
+                              label: Text(
+                                seconds == 0
+                                    ? l10n.startCountdownOff
+                                    : l10n.startCountdownSeconds(seconds),
+                              ),
+                            ),
+                        ],
+                        selected: {settings.startCountdownSeconds},
+                        onSelectionChanged: (selection) => _update(
+                          settings.copyWith(
+                            startCountdownSeconds: selection.first,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

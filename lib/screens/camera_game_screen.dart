@@ -82,6 +82,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   late final BrushingSessionController _controller;
   late final AnimationController _characterAnimation;
   late final AnimationController _zoneChangeAnimation;
+  Timer? _countdownTimer;
   StreamSubscription<void>? _volumeButtonSubscription;
   CameraController? _cameraController;
   Future<void>? _cameraFuture;
@@ -94,6 +95,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   DateTime _lastFaceFrameStartedAt = DateTime.fromMillisecondsSinceEpoch(0);
   bool _isProcessingFaceFrame = false;
   bool _isStreamingCameraImages = false;
+  int? _countdownRemaining;
 
   static const Map<DeviceOrientation, int> _deviceOrientationDegrees = {
     DeviceOrientation.portraitUp: 0,
@@ -108,7 +110,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     _controller = BrushingSessionController(
       brushingDurationSeconds: widget.settings.brushingDurationSeconds,
       zoneOrder: widget.settings.zoneOrder,
-    )..start();
+    );
     _lastAnimatedZone = _controller.currentZone;
     _controller.addListener(_handleSessionChanged);
     _configureVolumePause();
@@ -123,7 +125,33 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       duration: const Duration(milliseconds: 1050),
       value: 1,
     );
+    _startCountdownOrBrushing();
     _initializePlainCamera();
+  }
+
+  void _startCountdownOrBrushing() {
+    final countdownSeconds = widget.settings.startCountdownSeconds;
+    if (countdownSeconds <= 0) {
+      _controller.start();
+      return;
+    }
+
+    _countdownRemaining = countdownSeconds;
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) {
+        return;
+      }
+      final remaining = _countdownRemaining;
+      if (remaining == null || remaining <= 1) {
+        _countdownTimer?.cancel();
+        _countdownTimer = null;
+        setState(() => _countdownRemaining = null);
+        _controller.start();
+        return;
+      }
+
+      setState(() => _countdownRemaining = remaining - 1);
+    });
   }
 
   void _configureVolumePause() {
@@ -418,6 +446,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     VolumeButtonService.instance.setEnabled(false);
     _volumeButtonSubscription?.cancel();
     if (_isStreamingCameraImages == true) {
@@ -499,6 +528,13 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                               Positioned.fill(
                                 child: _PausedOverlay(
                                   locked: widget.settings.pauseLockEnabled,
+                                ),
+                              ),
+                            if (_countdownRemaining != null)
+                              Positioned.fill(
+                                child: _CountdownOverlay(
+                                  remaining: _countdownRemaining!,
+                                  color: _themeColor,
                                 ),
                               ),
                             Align(
@@ -1419,6 +1455,75 @@ class _PausedOverlay extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   locked ? l10n.longPressToResume : l10n.tapToResume,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF5D5A88),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CountdownOverlay extends StatelessWidget {
+  const _CountdownOverlay({required this.remaining, required this.color});
+
+  final int remaining;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.18)),
+      child: Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x26000000),
+                blurRadius: 20,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.countdownReady,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF2C2A4A),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, animation) =>
+                      ScaleTransition(scale: animation, child: child),
+                  child: Text(
+                    '$remaining',
+                    key: ValueKey(remaining),
+                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      color: color,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  l10n.countdownStartsSoon,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: const Color(0xFF5D5A88),

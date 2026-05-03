@@ -48,6 +48,18 @@
       }
     }
   },
+  "startCountdownLabel": "Start-Countdown",
+  "startCountdownOff": "Aus",
+  "startCountdownSeconds": "{seconds}s",
+  "@startCountdownSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "countdownReady": "Bereit machen",
+  "countdownStartsSoon": "Gleich geht das Putzen los.",
   "languageSettingsTitle": "Sprache",
   "languageSystem": "System",
   "languageEnglish": "Englisch",
