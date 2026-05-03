@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -465,11 +466,18 @@ class _CameraGameScreenState extends State<CameraGameScreen>
 
   @override
   Widget build(BuildContext context) {
+    final countdownRemaining = _countdownRemaining;
+    final isCountingDown = countdownRemaining != null;
+
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: _screenPauseEnabled ? _controller.togglePause : null,
-        onLongPress: _screenPauseLocked ? _controller.togglePause : null,
+        onTap: !isCountingDown && _screenPauseEnabled
+            ? _controller.togglePause
+            : null,
+        onLongPress: !isCountingDown && _screenPauseLocked
+            ? _controller.togglePause
+            : null,
         child: Stack(
           children: [
             Positioned.fill(child: _buildPlainCameraLayer(context)),
@@ -530,14 +538,6 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                                   locked: widget.settings.pauseLockEnabled,
                                 ),
                               ),
-                            if (_countdownRemaining != null)
-                              Positioned.fill(
-                                child: _CountdownOverlay(
-                                  remaining: _countdownRemaining!,
-                                  character: widget.character,
-                                  color: _themeColor,
-                                ),
-                              ),
                             Align(
                               alignment: Alignment.bottomRight,
                               child: _CharacterReaction(
@@ -572,6 +572,14 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                 ),
               ),
             ),
+            if (countdownRemaining != null)
+              Positioned.fill(
+                child: _CountdownOverlay(
+                  remaining: countdownRemaining,
+                  character: widget.character,
+                  color: _themeColor,
+                ),
+              ),
           ],
         ),
       ),
@@ -1487,61 +1495,73 @@ class _CountdownOverlay extends StatelessWidget {
     final l10n = context.l10n;
 
     return DecoratedBox(
-      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.18)),
-      child: Center(
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1)),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 9, sigmaY: 9),
         child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x26000000),
-                blurRadius: 20,
-                offset: Offset(0, 10),
+          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.1)),
+          child: Center(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.94),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    blurRadius: 20,
+                    offset: Offset(0, 10),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.countdownReady,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF2C2A4A),
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 34,
+                  vertical: 24,
                 ),
-                const SizedBox(height: 4),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  transitionBuilder: (child, animation) =>
-                      ScaleTransition(scale: animation, child: child),
-                  child: Wrap(
-                    key: ValueKey(remaining),
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: [
-                      for (var i = 0; i < remaining; i++)
-                        Text(
-                          character.emoji,
-                          style: const TextStyle(fontSize: 48, height: 1.05),
-                        ),
-                    ],
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.countdownReady,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF2C2A4A),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      transitionBuilder: (child, animation) =>
+                          ScaleTransition(scale: animation, child: child),
+                      child: Wrap(
+                        key: ValueKey(remaining),
+                        alignment: WrapAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          for (var i = 0; i < remaining; i++)
+                            Text(
+                              character.emoji,
+                              style: const TextStyle(
+                                fontSize: 48,
+                                height: 1.05,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      l10n.countdownStartsSoon,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF5D5A88),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  l10n.countdownStartsSoon,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF5D5A88),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
