@@ -1436,41 +1436,57 @@ class _PausedOverlay extends StatelessWidget {
     final l10n = context.l10n;
 
     return DecoratedBox(
-      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.26)),
-      child: Center(
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08)),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 9, sigmaY: 9),
         child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.pause_circle_filled_rounded,
-                  size: 44,
-                  color: Color(0xFF2C2A4A),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.paused,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF2C2A4A),
+          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2)),
+          child: Center(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.94),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    blurRadius: 20,
+                    offset: Offset(0, 10),
                   ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 18,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  locked ? l10n.longPressToResume : l10n.tapToResume,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF5D5A88),
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.pause_circle_filled_rounded,
+                      size: 44,
+                      color: Color(0xFF2C2A4A),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.paused,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF2C2A4A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      locked ? l10n.longPressToResume : l10n.tapToResume,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: const Color(0xFF5D5A88),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
