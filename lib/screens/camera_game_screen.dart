@@ -1102,9 +1102,9 @@ class _BrushingGuidePainter extends CustomPainter {
       case PlaqueVisualStyle.dots:
         _paintPlaqueDot(canvas, center, radius);
       case PlaqueVisualStyle.bacteria:
-        _paintBacteria(canvas, center, radius * 1.8, index);
+        _paintBacteria(canvas, center, radius * 3, index);
       case PlaqueVisualStyle.food:
-        _paintFood(canvas, center, radius * 1.8, index);
+        _paintFood(canvas, center, radius * 3, index);
     }
   }
 
