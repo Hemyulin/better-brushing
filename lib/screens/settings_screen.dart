@@ -207,6 +207,25 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 18),
+                    Text(
+                      l10n.plaqueVisualSizeLabel,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Slider(
+                      value: settings.plaqueVisualScale,
+                      min: AppSettings.minPlaqueVisualScale,
+                      max: AppSettings.maxPlaqueVisualScale,
+                      divisions: 20,
+                      label: _formatScale(settings.plaqueVisualScale),
+                      onChanged: (value) => _update(
+                        settings.copyWith(
+                          plaqueVisualScale: (value * 10).roundToDouble() / 10,
+                        ),
+                      ),
+                    ),
                     if (settings.plaqueVisualStyle == PlaqueVisualStyle.food)
                       Padding(
                         padding: const EdgeInsets.only(top: 14),
@@ -325,6 +344,8 @@ class SettingsScreen extends StatelessWidget {
     }
     return '$wholeMinutes.5';
   }
+
+  String _formatScale(double scale) => '${scale.toStringAsFixed(1)}x';
 }
 
 class _SettingsSection extends StatelessWidget {

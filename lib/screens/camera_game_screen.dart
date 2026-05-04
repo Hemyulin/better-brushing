@@ -553,6 +553,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                                 remainingPlaque: _controller.remainingPlaque,
                                 color: _themeColor,
                                 visualStyle: widget.settings.plaqueVisualStyle,
+                                visualScale: widget.settings.plaqueVisualScale,
                                 foodCategory:
                                     widget.settings.foodVisualCategory,
                                 mouthBounds:
@@ -892,6 +893,7 @@ class _BrushingGuideOverlay extends StatelessWidget {
     required this.remainingPlaque,
     required this.color,
     required this.visualStyle,
+    required this.visualScale,
     required this.foodCategory,
     required this.mouthBounds,
     required this.previousZone,
@@ -902,6 +904,7 @@ class _BrushingGuideOverlay extends StatelessWidget {
   final int remainingPlaque;
   final Color color;
   final PlaqueVisualStyle visualStyle;
+  final double visualScale;
   final FoodVisualCategory foodCategory;
   final Rect? mouthBounds;
   final BrushingZone? previousZone;
@@ -916,6 +919,7 @@ class _BrushingGuideOverlay extends StatelessWidget {
           remainingPlaque: remainingPlaque,
           color: color,
           visualStyle: visualStyle,
+          visualScale: visualScale,
           foodCategory: foodCategory,
           mouthBounds: mouthBounds,
           previousZone: previousZone,
@@ -932,6 +936,7 @@ class _BrushingGuidePainter extends CustomPainter {
     required this.remainingPlaque,
     required this.color,
     required this.visualStyle,
+    required this.visualScale,
     required this.foodCategory,
     required this.mouthBounds,
     required this.previousZone,
@@ -942,6 +947,7 @@ class _BrushingGuidePainter extends CustomPainter {
   final int remainingPlaque;
   final Color color;
   final PlaqueVisualStyle visualStyle;
+  final double visualScale;
   final FoodVisualCategory foodCategory;
   final Rect? mouthBounds;
   final BrushingZone? previousZone;
@@ -1098,13 +1104,14 @@ class _BrushingGuidePainter extends CustomPainter {
   }
 
   void _paintPlaque(Canvas canvas, Offset center, double radius, int index) {
+    final scaledRadius = radius * visualScale;
     switch (visualStyle) {
       case PlaqueVisualStyle.dots:
-        _paintPlaqueDot(canvas, center, radius);
+        _paintPlaqueDot(canvas, center, scaledRadius);
       case PlaqueVisualStyle.bacteria:
-        _paintBacteria(canvas, center, radius * 3, index);
+        _paintBacteria(canvas, center, scaledRadius, index);
       case PlaqueVisualStyle.food:
-        _paintFood(canvas, center, radius * 3, index);
+        _paintFood(canvas, center, scaledRadius, index);
     }
   }
 
@@ -1237,6 +1244,7 @@ class _BrushingGuidePainter extends CustomPainter {
         oldDelegate.remainingPlaque != remainingPlaque ||
         oldDelegate.color != color ||
         oldDelegate.visualStyle != visualStyle ||
+        oldDelegate.visualScale != visualScale ||
         oldDelegate.foodCategory != foodCategory ||
         oldDelegate.mouthBounds != mouthBounds ||
         oldDelegate.previousZone != previousZone ||

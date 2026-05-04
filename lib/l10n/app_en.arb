@@ -93,6 +93,7 @@
   "plaqueVisualDots": "Dots",
   "plaqueVisualBacteria": "Bacteria",
   "plaqueVisualFood": "Food",
+  "plaqueVisualSizeLabel": "Plaque size",
   "foodCategoryEverything": "Everything",
   "foodCategoryVegetarian": "Vegetarian",
   "foodCategoryVegan": "Vegan",

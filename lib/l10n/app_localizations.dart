@@ -530,6 +530,12 @@ abstract class AppLocalizations {
   /// **'Food'**
   String get plaqueVisualFood;
 
+  /// No description provided for @plaqueVisualSizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Plaque size'**
+  String get plaqueVisualSizeLabel;
+
   /// No description provided for @foodCategoryEverything.
   ///
   /// In en, this message translates to:

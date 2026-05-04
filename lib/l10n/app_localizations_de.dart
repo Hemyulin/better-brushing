@@ -241,6 +241,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get plaqueVisualFood => 'Essen';
 
   @override
+  String get plaqueVisualSizeLabel => 'Plaque-Größe';
+
+  @override
   String get foodCategoryEverything => 'Alles';
 
   @override

@@ -21,6 +21,7 @@ class AppSettings {
     this.pauseLockEnabled = false,
     this.mouthTargetMode = MouthTargetMode.dynamic,
     this.plaqueVisualStyle = PlaqueVisualStyle.dots,
+    this.plaqueVisualScale = defaultPlaqueVisualScale,
     this.foodVisualCategory = FoodVisualCategory.everything,
     this.zoneOrder = defaultZoneOrder,
     this.foxEarHeightOffset = 0,
@@ -45,6 +46,7 @@ class AppSettings {
   final bool pauseLockEnabled;
   final MouthTargetMode mouthTargetMode;
   final PlaqueVisualStyle plaqueVisualStyle;
+  final double plaqueVisualScale;
   final FoodVisualCategory foodVisualCategory;
   final List<BrushingZone> zoneOrder;
   final double foxEarHeightOffset;
@@ -58,6 +60,9 @@ class AppSettings {
   static const maxDurationSeconds = 300;
   static const durationStepSeconds = 30;
   static const countdownOptionsSeconds = [0, 3, 5, 10];
+  static const minPlaqueVisualScale = 1.0;
+  static const maxPlaqueVisualScale = 3.0;
+  static const defaultPlaqueVisualScale = 2.5;
   static const minCharacterOffset = -1.0;
   static const maxCharacterOffset = 1.0;
 
@@ -83,6 +88,7 @@ class AppSettings {
     bool? pauseLockEnabled,
     MouthTargetMode? mouthTargetMode,
     PlaqueVisualStyle? plaqueVisualStyle,
+    double? plaqueVisualScale,
     FoodVisualCategory? foodVisualCategory,
     List<BrushingZone>? zoneOrder,
     double? foxEarHeightOffset,
@@ -102,6 +108,7 @@ class AppSettings {
       pauseLockEnabled: pauseLockEnabled ?? this.pauseLockEnabled,
       mouthTargetMode: mouthTargetMode ?? this.mouthTargetMode,
       plaqueVisualStyle: plaqueVisualStyle ?? this.plaqueVisualStyle,
+      plaqueVisualScale: plaqueVisualScale ?? this.plaqueVisualScale,
       foodVisualCategory: foodVisualCategory ?? this.foodVisualCategory,
       zoneOrder: zoneOrder ?? this.zoneOrder,
       foxEarHeightOffset: foxEarHeightOffset ?? this.foxEarHeightOffset,
@@ -125,6 +132,7 @@ class AppSettings {
       'pauseLockEnabled': pauseLockEnabled,
       'mouthTargetMode': mouthTargetMode.name,
       'plaqueVisualStyle': plaqueVisualStyle.name,
+      'plaqueVisualScale': plaqueVisualScale,
       'foodVisualCategory': foodVisualCategory.name,
       'zoneOrder': zoneOrder.map((zone) => zone.name).toList(),
       'foxEarHeightOffset': foxEarHeightOffset,
@@ -161,6 +169,7 @@ class AppSettings {
         json['plaqueVisualStyle'],
         PlaqueVisualStyle.dots,
       ),
+      plaqueVisualScale: _readPlaqueVisualScale(json['plaqueVisualScale']),
       foodVisualCategory: _readEnum(
         FoodVisualCategory.values,
         json['foodVisualCategory'],
@@ -190,6 +199,11 @@ class AppSettings {
   static int _readCountdown(Object? value) {
     final seconds = value is num ? value.round() : 3;
     return countdownOptionsSeconds.contains(seconds) ? seconds : 3;
+  }
+
+  static double _readPlaqueVisualScale(Object? value) {
+    final scale = value is num ? value.toDouble() : defaultPlaqueVisualScale;
+    return scale.clamp(minPlaqueVisualScale, maxPlaqueVisualScale);
   }
 
   static double _readCharacterOffset(Object? value) {
