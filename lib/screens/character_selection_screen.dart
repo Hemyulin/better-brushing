@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../controllers/app_settings_controller.dart';
 import '../l10n/l10n.dart';
 import '../models/character.dart';
+import '../services/app_audio_service.dart';
 import '../widgets/character_card.dart';
 import 'camera_game_screen.dart';
 import 'settings_screen.dart';
@@ -91,6 +92,7 @@ class CharacterSelectionScreen extends StatelessWidget {
   }
 
   void _openGame(BuildContext context, BrushingCharacter character) {
+    AppAudioService.instance.play(AppSound.click);
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CameraGameScreen(
@@ -103,6 +105,7 @@ class CharacterSelectionScreen extends StatelessWidget {
   }
 
   void _openSettings(BuildContext context) {
+    AppAudioService.instance.play(AppSound.click);
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => SettingsScreen(

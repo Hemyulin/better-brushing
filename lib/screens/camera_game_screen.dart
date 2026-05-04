@@ -14,6 +14,7 @@ import '../l10n/l10n.dart';
 import '../models/app_settings.dart';
 import '../models/brushing_zone.dart';
 import '../models/character.dart';
+import '../services/app_audio_service.dart';
 import '../services/volume_button_service.dart';
 import '../utils/face_mesh_camera_image_adapter.dart';
 
@@ -92,10 +93,13 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   Rect? _trackedFaceBounds;
   Rect? _trackedMouthBounds;
   late BrushingZone _lastAnimatedZone;
+  late SessionPhase _lastAudioPhase;
+  late int _lastPlaqueCount;
   BrushingZone? _transitionFromZone;
   DateTime _lastFaceFrameStartedAt = DateTime.fromMillisecondsSinceEpoch(0);
   bool _isProcessingFaceFrame = false;
   bool _isStreamingCameraImages = false;
+  bool _wasPaused = false;
   int? _countdownRemaining;
 
   static const Map<DeviceOrientation, int> _deviceOrientationDegrees = {
@@ -113,6 +117,8 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       zoneOrder: widget.settings.zoneOrder,
     );
     _lastAnimatedZone = _controller.currentZone;
+    _lastAudioPhase = _controller.phase;
+    _lastPlaqueCount = _controller.remainingPlaque;
     _controller.addListener(_handleSessionChanged);
     _configureVolumePause();
     _characterAnimation = AnimationController(
@@ -138,6 +144,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     }
 
     _countdownRemaining = countdownSeconds;
+    AppAudioService.instance.play(AppSound.countdownTick);
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) {
         return;
@@ -147,11 +154,13 @@ class _CameraGameScreenState extends State<CameraGameScreen>
         _countdownTimer?.cancel();
         _countdownTimer = null;
         setState(() => _countdownRemaining = null);
+        AppAudioService.instance.play(AppSound.countdownGo);
         _controller.start();
         return;
       }
 
       setState(() => _countdownRemaining = remaining - 1);
+      AppAudioService.instance.play(AppSound.countdownTick);
     });
   }
 
@@ -441,8 +450,33 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       _transitionFromZone = _lastAnimatedZone;
       _lastAnimatedZone = _controller.currentZone;
       _zoneChangeAnimation.forward(from: 0);
+      AppAudioService.instance.play(AppSound.zoneSwoosh);
+      AppAudioService.instance.play(AppSound.zonePulse);
     }
+    _playSessionFeedback();
     setState(() {});
+  }
+
+  void _playSessionFeedback() {
+    if (_controller.isPaused != _wasPaused) {
+      AppAudioService.instance.play(
+        _controller.isPaused ? AppSound.pause : AppSound.resume,
+      );
+      _wasPaused = _controller.isPaused;
+    }
+
+    final remainingPlaque = _controller.remainingPlaque;
+    if (_controller.phase == SessionPhase.brushing &&
+        remainingPlaque < _lastPlaqueCount) {
+      AppAudioService.instance.play(AppSound.plaquePop);
+    }
+    _lastPlaqueCount = remainingPlaque;
+
+    if (_controller.phase != _lastAudioPhase &&
+        _controller.phase == SessionPhase.waitingForParent) {
+      AppAudioService.instance.play(AppSound.sessionComplete);
+    }
+    _lastAudioPhase = _controller.phase;
   }
 
   @override
@@ -472,11 +506,9 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: !isCountingDown && _screenPauseEnabled
-            ? _controller.togglePause
-            : null,
+        onTap: !isCountingDown && _screenPauseEnabled ? _togglePause : null,
         onLongPress: !isCountingDown && _screenPauseLocked
-            ? _controller.togglePause
+            ? _togglePause
             : null,
         child: Stack(
           children: [
@@ -552,7 +584,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                       const SizedBox(height: 12),
                       if (_controller.canAddParentTime)
                         FilledButton(
-                          onPressed: _controller.addParentTime,
+                          onPressed: _addParentTime,
                           style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFF2C2A4A),
                             padding: const EdgeInsets.symmetric(
@@ -564,7 +596,10 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                         ),
                       if (_controller.phase == SessionPhase.done)
                         TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () {
+                            AppAudioService.instance.play(AppSound.click);
+                            Navigator.of(context).pop();
+                          },
                           child: Text(context.l10n.backToCharacters),
                         ),
                     ],
@@ -591,6 +626,15 @@ class _CameraGameScreenState extends State<CameraGameScreen>
 
   bool get _screenPauseLocked =>
       widget.settings.allowsScreenPause && widget.settings.pauseLockEnabled;
+
+  void _togglePause() {
+    _controller.togglePause();
+  }
+
+  void _addParentTime() {
+    AppAudioService.instance.play(AppSound.click);
+    _controller.addParentTime();
+  }
 
   Color get _themeColor => switch (widget.character) {
     BrushingCharacter.fox => const Color(0xFFF28B50),
