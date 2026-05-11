@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import 'brushing_zone.dart';
+import 'kid_profile.dart';
 
 enum AppLanguage { system, english, german }
 
@@ -23,6 +24,8 @@ class AppSettings {
     this.plaqueVisualStyle = PlaqueVisualStyle.dots,
     this.plaqueVisualScale = defaultPlaqueVisualScale,
     this.foodVisualCategory = FoodVisualCategory.everything,
+    this.kidProfiles = const [KidProfile.defaultProfile],
+    this.activeKidProfileId = KidProfile.defaultProfileId,
     this.zoneOrder = defaultZoneOrder,
     this.foxEarHeightOffset = 0,
     this.foxEarSpacingOffset = 0,
@@ -48,6 +51,8 @@ class AppSettings {
   final PlaqueVisualStyle plaqueVisualStyle;
   final double plaqueVisualScale;
   final FoodVisualCategory foodVisualCategory;
+  final List<KidProfile> kidProfiles;
+  final String activeKidProfileId;
   final List<BrushingZone> zoneOrder;
   final double foxEarHeightOffset;
   final double foxEarSpacingOffset;
@@ -80,6 +85,15 @@ class AppSettings {
       pauseControl == PauseControl.volumeButtons ||
       pauseControl == PauseControl.screenAndVolumeButtons;
 
+  KidProfile get activeKidProfile {
+    for (final profile in kidProfiles) {
+      if (profile.id == activeKidProfileId) {
+        return profile;
+      }
+    }
+    return kidProfiles.first;
+  }
+
   AppSettings copyWith({
     int? brushingDurationSeconds,
     int? startCountdownSeconds,
@@ -90,6 +104,8 @@ class AppSettings {
     PlaqueVisualStyle? plaqueVisualStyle,
     double? plaqueVisualScale,
     FoodVisualCategory? foodVisualCategory,
+    List<KidProfile>? kidProfiles,
+    String? activeKidProfileId,
     List<BrushingZone>? zoneOrder,
     double? foxEarHeightOffset,
     double? foxEarSpacingOffset,
@@ -110,6 +126,8 @@ class AppSettings {
       plaqueVisualStyle: plaqueVisualStyle ?? this.plaqueVisualStyle,
       plaqueVisualScale: plaqueVisualScale ?? this.plaqueVisualScale,
       foodVisualCategory: foodVisualCategory ?? this.foodVisualCategory,
+      kidProfiles: kidProfiles ?? this.kidProfiles,
+      activeKidProfileId: activeKidProfileId ?? this.activeKidProfileId,
       zoneOrder: zoneOrder ?? this.zoneOrder,
       foxEarHeightOffset: foxEarHeightOffset ?? this.foxEarHeightOffset,
       foxEarSpacingOffset: foxEarSpacingOffset ?? this.foxEarSpacingOffset,
@@ -134,6 +152,8 @@ class AppSettings {
       'plaqueVisualStyle': plaqueVisualStyle.name,
       'plaqueVisualScale': plaqueVisualScale,
       'foodVisualCategory': foodVisualCategory.name,
+      'kidProfiles': kidProfiles.map((profile) => profile.toJson()).toList(),
+      'activeKidProfileId': activeKidProfileId,
       'zoneOrder': zoneOrder.map((zone) => zone.name).toList(),
       'foxEarHeightOffset': foxEarHeightOffset,
       'foxEarSpacingOffset': foxEarSpacingOffset,
@@ -174,6 +194,11 @@ class AppSettings {
         FoodVisualCategory.values,
         json['foodVisualCategory'],
         FoodVisualCategory.everything,
+      ),
+      kidProfiles: _readKidProfiles(json['kidProfiles']),
+      activeKidProfileId: _readActiveKidProfileId(
+        json['activeKidProfileId'],
+        json['kidProfiles'],
       ),
       zoneOrder: _readZoneOrder(json),
       foxEarHeightOffset: _readCharacterOffset(json['foxEarHeightOffset']),
@@ -225,6 +250,30 @@ class AppSettings {
       }
     }
     return fallback;
+  }
+
+  static List<KidProfile> _readKidProfiles(Object? value) {
+    if (value is List) {
+      final profiles = <KidProfile>[];
+      for (final item in value) {
+        final profile = KidProfile.fromJson(item);
+        if (profile != null && !profiles.any((p) => p.id == profile.id)) {
+          profiles.add(profile);
+        }
+      }
+      if (profiles.isNotEmpty) {
+        return profiles;
+      }
+    }
+    return const [KidProfile.defaultProfile];
+  }
+
+  static String _readActiveKidProfileId(Object? value, Object? profilesValue) {
+    final profiles = _readKidProfiles(profilesValue);
+    if (value is String && profiles.any((profile) => profile.id == value)) {
+      return value;
+    }
+    return profiles.first.id;
   }
 
   static List<BrushingZone> _readZoneOrder(Map<String, Object?> json) {

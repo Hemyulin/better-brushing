@@ -140,6 +140,72 @@ abstract class AppLocalizations {
   /// **'Cool, steady, and happy to help with every side.'**
   String get gatorDescription;
 
+  /// No description provided for @kidProfilesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Who is brushing?'**
+  String get kidProfilesTitle;
+
+  /// No description provided for @addKidProfileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add kid profile'**
+  String get addKidProfileTooltip;
+
+  /// No description provided for @addKidProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add kid profile'**
+  String get addKidProfileTitle;
+
+  /// No description provided for @editKidProfileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit kid profile'**
+  String get editKidProfileTooltip;
+
+  /// No description provided for @editKidProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit kid profile'**
+  String get editKidProfileTitle;
+
+  /// No description provided for @kidProfileNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Kid\'s name'**
+  String get kidProfileNameHint;
+
+  /// No description provided for @kidProfileAvatarLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a smiley'**
+  String get kidProfileAvatarLabel;
+
+  /// No description provided for @removeKidProfileTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove kid profile'**
+  String get removeKidProfileTooltip;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
   /// No description provided for @letsCleanThisSide.
   ///
   /// In en, this message translates to:
@@ -229,6 +295,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to characters'**
   String get backToCharacters;
+
+  /// No description provided for @smileChallengeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can {name} beat this smile today?'**
+  String smileChallengeTitle(String name);
+
+  /// No description provided for @smileChallengeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Brush well, then take a fresh victory photo.'**
+  String get smileChallengeSubtitle;
+
+  /// No description provided for @smileChallengeStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start brushing'**
+  String get smileChallengeStart;
+
+  /// No description provided for @smileCaptureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Take your victory smile'**
+  String get smileCaptureTitle;
+
+  /// No description provided for @smileCaptureSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This will become tomorrow\'s challenge photo.'**
+  String get smileCaptureSubtitle;
+
+  /// No description provided for @smileCaptureButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Take smile photo'**
+  String get smileCaptureButton;
+
+  /// No description provided for @smileCaptureSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Smile saved!'**
+  String get smileCaptureSavedTitle;
+
+  /// No description provided for @smileCaptureSavedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'It is ready for the next brushing challenge.'**
+  String get smileCaptureSavedSubtitle;
 
   /// No description provided for @cameraPreviewFallback.
   ///

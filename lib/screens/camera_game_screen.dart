@@ -14,7 +14,10 @@ import '../l10n/l10n.dart';
 import '../models/app_settings.dart';
 import '../models/brushing_zone.dart';
 import '../models/character.dart';
+import '../models/kid_profile.dart';
+import '../models/smile_photo.dart';
 import '../services/app_audio_service.dart';
+import '../services/smile_photo_store.dart';
 import '../services/volume_button_service.dart';
 import '../utils/face_mesh_camera_image_adapter.dart';
 
@@ -22,11 +25,13 @@ class CameraGameScreen extends StatefulWidget {
   const CameraGameScreen({
     super.key,
     required this.character,
+    required this.kidProfile,
     required this.availableCameras,
     required this.settings,
   });
 
   final BrushingCharacter character;
+  final KidProfile kidProfile;
   final List<CameraDescription> availableCameras;
   final AppSettings settings;
 
@@ -98,9 +103,15 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   BrushingZone? _transitionFromZone;
   DateTime _lastFaceFrameStartedAt = DateTime.fromMillisecondsSinceEpoch(0);
   bool _isProcessingFaceFrame = false;
+  bool _isLoadingSmileChallenge = true;
+  bool _isSavingSmilePhoto = false;
   bool _isStreamingCameraImages = false;
+  bool _hasStartedBrushing = false;
+  bool _showSmileChallenge = false;
   bool _wasPaused = false;
   int? _countdownRemaining;
+  SmilePhoto? _latestSmilePhoto;
+  SmilePhoto? _capturedSmilePhoto;
 
   static const Map<DeviceOrientation, int> _deviceOrientationDegrees = {
     DeviceOrientation.portraitUp: 0,
@@ -132,13 +143,37 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       duration: const Duration(milliseconds: 1050),
       value: 1,
     );
-    _startCountdownOrBrushing();
     _initializePlainCamera();
+    _loadSmileChallenge();
+  }
+
+  Future<void> _loadSmileChallenge() async {
+    final latestPhoto = await SmilePhotoStore.instance.latestPhoto(
+      kidProfileId: widget.kidProfile.id,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _latestSmilePhoto = latestPhoto;
+      _showSmileChallenge = latestPhoto != null;
+      _isLoadingSmileChallenge = false;
+    });
+
+    if (latestPhoto == null) {
+      _startCountdownOrBrushing();
+    }
   }
 
   void _startCountdownOrBrushing() {
+    if (_countdownRemaining != null || _hasStartedBrushing) {
+      return;
+    }
+
     final countdownSeconds = widget.settings.startCountdownSeconds;
     if (countdownSeconds <= 0) {
+      _hasStartedBrushing = true;
       _controller.start();
       return;
     }
@@ -155,6 +190,7 @@ class _CameraGameScreenState extends State<CameraGameScreen>
         _countdownTimer = null;
         setState(() => _countdownRemaining = null);
         AppAudioService.instance.play(AppSound.countdownGo);
+        _hasStartedBrushing = true;
         _controller.start();
         return;
       }
@@ -162,6 +198,12 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       setState(() => _countdownRemaining = remaining - 1);
       AppAudioService.instance.play(AppSound.countdownTick);
     });
+  }
+
+  void _startSmileChallenge() {
+    AppAudioService.instance.play(AppSound.click);
+    setState(() => _showSmileChallenge = false);
+    _startCountdownOrBrushing();
   }
 
   void _configureVolumePause() {
@@ -479,6 +521,43 @@ class _CameraGameScreenState extends State<CameraGameScreen>
     _lastAudioPhase = _controller.phase;
   }
 
+  Future<void> _captureSmilePhoto() async {
+    final controller = _cameraController;
+    if (controller == null || _cameraFuture == null || _isSavingSmilePhoto) {
+      return;
+    }
+
+    setState(() => _isSavingSmilePhoto = true);
+    try {
+      await _cameraFuture;
+      if (_isStreamingCameraImages) {
+        await controller.stopImageStream();
+        _isStreamingCameraImages = false;
+      }
+      final photo = await controller.takePicture();
+      final savedPhoto = await SmilePhotoStore.instance.saveCapturedPhoto(
+        photo,
+        character: widget.character,
+        kidProfileId: widget.kidProfile.id,
+      );
+      if (!mounted) {
+        return;
+      }
+      if (savedPhoto != null) {
+        AppAudioService.instance.play(AppSound.sessionComplete);
+      }
+      setState(() => _capturedSmilePhoto = savedPhoto);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _capturedSmilePhoto = null);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSavingSmilePhoto = false);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _countdownTimer?.cancel();
@@ -502,12 +581,16 @@ class _CameraGameScreenState extends State<CameraGameScreen>
   Widget build(BuildContext context) {
     final countdownRemaining = _countdownRemaining;
     final isCountingDown = countdownRemaining != null;
+    final blocksSessionGestures =
+        isCountingDown || _showSmileChallenge || _isLoadingSmileChallenge;
 
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: !isCountingDown && _screenPauseEnabled ? _togglePause : null,
-        onLongPress: !isCountingDown && _screenPauseLocked
+        onTap: !blocksSessionGestures && _screenPauseEnabled
+            ? _togglePause
+            : null,
+        onLongPress: !blocksSessionGestures && _screenPauseLocked
             ? _togglePause
             : null,
         child: Stack(
@@ -596,6 +679,18 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                           child: Text(context.l10n.plusThirtySeconds),
                         ),
                       if (_controller.phase == SessionPhase.done)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _SmileCapturePanel(
+                            capturedPhoto: _capturedSmilePhoto,
+                            isSaving: _isSavingSmilePhoto,
+                            cameraReady:
+                                _cameraController != null &&
+                                _cameraFuture != null,
+                            onCapture: _captureSmilePhoto,
+                          ),
+                        ),
+                      if (_controller.phase == SessionPhase.done)
                         TextButton(
                           onPressed: () {
                             AppAudioService.instance.play(AppSound.click);
@@ -614,6 +709,22 @@ class _CameraGameScreenState extends State<CameraGameScreen>
                   remaining: countdownRemaining,
                   character: widget.character,
                   color: _themeColor,
+                ),
+              ),
+            if (_isLoadingSmileChallenge)
+              const Positioned.fill(
+                child: ColoredBox(
+                  color: Color(0x66000000),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ),
+            if (_showSmileChallenge && _latestSmilePhoto != null)
+              Positioned.fill(
+                child: _SmileChallengeOverlay(
+                  photo: _latestSmilePhoto!,
+                  profileName: widget.kidProfile.name,
+                  color: _themeColor,
+                  onStart: _startSmileChallenge,
                 ),
               ),
           ],
@@ -691,6 +802,194 @@ class _CameraGameScreenState extends State<CameraGameScreen>
       return l10n.almostDone;
     }
     return l10n.keepGoing;
+  }
+}
+
+class _SmileChallengeOverlay extends StatelessWidget {
+  const _SmileChallengeOverlay({
+    required this.photo,
+    required this.profileName,
+    required this.color,
+    required this.onStart,
+  });
+
+  final SmilePhoto photo;
+  final String profileName;
+  final Color color;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return ColoredBox(
+      color: const Color(0x99000000),
+      child: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 24,
+                      offset: Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 4 / 5,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.file(
+                            File(photo.path),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Text(
+                        l10n.smileChallengeTitle(profileName),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.smileChallengeSubtitle,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: const Color(0xFF5D5A88),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      FilledButton.icon(
+                        onPressed: onStart,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: color,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: Text(l10n.smileChallengeStart),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SmileCapturePanel extends StatelessWidget {
+  const _SmileCapturePanel({
+    required this.capturedPhoto,
+    required this.isSaving,
+    required this.cameraReady,
+    required this.onCapture,
+  });
+
+  final SmilePhoto? capturedPhoto;
+  final bool isSaving;
+  final bool cameraReady;
+  final VoidCallback onCapture;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final photo = capturedPhoto;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 72,
+              height: 72,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: photo == null
+                    ? const ColoredBox(
+                        color: Color(0xFFFFE0B5),
+                        child: Icon(
+                          Icons.photo_camera_front_rounded,
+                          color: Color(0xFF2C2A4A),
+                        ),
+                      )
+                    : Image.file(File(photo.path), fit: BoxFit.cover),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    photo == null
+                        ? l10n.smileCaptureTitle
+                        : l10n.smileCaptureSavedTitle,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    photo == null
+                        ? l10n.smileCaptureSubtitle
+                        : l10n.smileCaptureSavedSubtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF5D5A88),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            if (photo == null)
+              IconButton.filled(
+                tooltip: l10n.smileCaptureButton,
+                onPressed: cameraReady && !isSaving ? onCapture : null,
+                icon: isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.camera_alt_rounded),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

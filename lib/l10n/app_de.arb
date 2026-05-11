@@ -7,6 +7,17 @@
   "gatorName": "Krokodil",
   "foxDescription": "Fröhlich, freundlich und bereit, Essensreste wegzuwischen.",
   "gatorDescription": "Ruhig, stark und bei jeder Seite mit dabei.",
+  "kidProfilesTitle": "Wer putzt gerade?",
+  "addKidProfileTooltip": "Kinderprofil hinzufügen",
+  "addKidProfileTitle": "Kinderprofil hinzufügen",
+  "editKidProfileTooltip": "Kinderprofil bearbeiten",
+  "editKidProfileTitle": "Kinderprofil bearbeiten",
+  "kidProfileNameHint": "Name des Kindes",
+  "kidProfileAvatarLabel": "Smiley auswählen",
+  "removeKidProfileTooltip": "Kinderprofil entfernen",
+  "save": "Speichern",
+  "remove": "Entfernen",
+  "cancel": "Abbrechen",
   "letsCleanThisSide": "Lass uns diese Seite putzen!",
   "greatJob": "Super gemacht!",
   "keepGoing": "Weiter so!",
@@ -22,6 +33,21 @@
   "currentZone": "Aktuelle Zone",
   "parentsTurn": "Eltern",
   "backToCharacters": "Zurück zur Auswahl",
+  "smileChallengeTitle": "Schafft {name} heute ein noch besseres Lächeln?",
+  "@smileChallengeTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "smileChallengeSubtitle": "Putz gut und mach danach ein neues Siegerfoto.",
+  "smileChallengeStart": "Putzen starten",
+  "smileCaptureTitle": "Mach dein Siegerlächeln",
+  "smileCaptureSubtitle": "Das wird dein Herausforderungsfoto für morgen.",
+  "smileCaptureButton": "Lächel-Foto machen",
+  "smileCaptureSavedTitle": "Lächeln gespeichert!",
+  "smileCaptureSavedSubtitle": "Es ist bereit für die nächste Putzrunde.",
   "cameraPreviewFallback": "Die Kameravorschau ist gerade nicht verfügbar, aber das Putzspiel kann trotzdem laufen.",
   "banubaTokenHint": "Füge ein Banuba-Test-Token per --dart-define=BANUBA_CLIENT_TOKEN=... hinzu, um AR-Filter zu aktivieren.",
   "banubaArUnavailable": "Banuba AR konnte noch nicht gestartet werden.",

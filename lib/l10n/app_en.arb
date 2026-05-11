@@ -7,6 +7,17 @@
   "gatorName": "Gator",
   "foxDescription": "Warm, cheerful, and ready to swish away snack crumbs.",
   "gatorDescription": "Cool, steady, and happy to help with every side.",
+  "kidProfilesTitle": "Who is brushing?",
+  "addKidProfileTooltip": "Add kid profile",
+  "addKidProfileTitle": "Add kid profile",
+  "editKidProfileTooltip": "Edit kid profile",
+  "editKidProfileTitle": "Edit kid profile",
+  "kidProfileNameHint": "Kid's name",
+  "kidProfileAvatarLabel": "Choose a smiley",
+  "removeKidProfileTooltip": "Remove kid profile",
+  "save": "Save",
+  "remove": "Remove",
+  "cancel": "Cancel",
   "letsCleanThisSide": "Let's clean this side!",
   "greatJob": "Great job!",
   "keepGoing": "Keep going!",
@@ -22,6 +33,21 @@
   "currentZone": "Current zone",
   "parentsTurn": "Parent turn",
   "backToCharacters": "Back to characters",
+  "smileChallengeTitle": "Can {name} beat this smile today?",
+  "@smileChallengeTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "smileChallengeSubtitle": "Brush well, then take a fresh victory photo.",
+  "smileChallengeStart": "Start brushing",
+  "smileCaptureTitle": "Take your victory smile",
+  "smileCaptureSubtitle": "This will become tomorrow's challenge photo.",
+  "smileCaptureButton": "Take smile photo",
+  "smileCaptureSavedTitle": "Smile saved!",
+  "smileCaptureSavedSubtitle": "It is ready for the next brushing challenge.",
   "cameraPreviewFallback": "Camera preview is not available right now, but the brushing game can still run.",
   "banubaTokenHint": "Add a Banuba trial token via --dart-define=BANUBA_CLIENT_TOKEN=... to enable AR filters.",
   "banubaArUnavailable": "Banuba AR could not start yet.",
