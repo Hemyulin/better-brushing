@@ -33,6 +33,39 @@ class AppLocalizationsEn extends AppLocalizations {
       'Cool, steady, and happy to help with every side.';
 
   @override
+  String get kidProfilesTitle => 'Who is brushing?';
+
+  @override
+  String get addKidProfileTooltip => 'Add kid profile';
+
+  @override
+  String get addKidProfileTitle => 'Add kid profile';
+
+  @override
+  String get editKidProfileTooltip => 'Edit kid profile';
+
+  @override
+  String get editKidProfileTitle => 'Edit kid profile';
+
+  @override
+  String get kidProfileNameHint => 'Kid\'s name';
+
+  @override
+  String get kidProfileAvatarLabel => 'Choose a smiley';
+
+  @override
+  String get removeKidProfileTooltip => 'Remove kid profile';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
   String get letsCleanThisSide => 'Let\'s clean this side!';
 
   @override
@@ -78,6 +111,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backToCharacters => 'Back to characters';
+
+  @override
+  String smileChallengeTitle(String name) {
+    return 'Can $name beat this smile today?';
+  }
+
+  @override
+  String get smileChallengeSubtitle =>
+      'Brush well, then take a fresh victory photo.';
+
+  @override
+  String get smileChallengeStart => 'Start brushing';
+
+  @override
+  String get smileCaptureTitle => 'Take your victory smile';
+
+  @override
+  String get smileCaptureSubtitle =>
+      'This will become tomorrow\'s challenge photo.';
+
+  @override
+  String get smileCaptureButton => 'Take smile photo';
+
+  @override
+  String get smileCaptureSavedTitle => 'Smile saved!';
+
+  @override
+  String get smileCaptureSavedSubtitle =>
+      'It is ready for the next brushing challenge.';
 
   @override
   String get cameraPreviewFallback =>

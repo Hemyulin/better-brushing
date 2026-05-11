@@ -32,6 +32,39 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gatorDescription => 'Ruhig, stark und bei jeder Seite mit dabei.';
 
   @override
+  String get kidProfilesTitle => 'Wer putzt gerade?';
+
+  @override
+  String get addKidProfileTooltip => 'Kinderprofil hinzufügen';
+
+  @override
+  String get addKidProfileTitle => 'Kinderprofil hinzufügen';
+
+  @override
+  String get editKidProfileTooltip => 'Kinderprofil bearbeiten';
+
+  @override
+  String get editKidProfileTitle => 'Kinderprofil bearbeiten';
+
+  @override
+  String get kidProfileNameHint => 'Name des Kindes';
+
+  @override
+  String get kidProfileAvatarLabel => 'Smiley auswählen';
+
+  @override
+  String get removeKidProfileTooltip => 'Kinderprofil entfernen';
+
+  @override
+  String get save => 'Speichern';
+
+  @override
+  String get remove => 'Entfernen';
+
+  @override
+  String get cancel => 'Abbrechen';
+
+  @override
   String get letsCleanThisSide => 'Lass uns diese Seite putzen!';
 
   @override
@@ -77,6 +110,35 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get backToCharacters => 'Zurück zur Auswahl';
+
+  @override
+  String smileChallengeTitle(String name) {
+    return 'Schafft $name heute ein noch besseres Lächeln?';
+  }
+
+  @override
+  String get smileChallengeSubtitle =>
+      'Putz gut und mach danach ein neues Siegerfoto.';
+
+  @override
+  String get smileChallengeStart => 'Putzen starten';
+
+  @override
+  String get smileCaptureTitle => 'Mach dein Siegerlächeln';
+
+  @override
+  String get smileCaptureSubtitle =>
+      'Das wird dein Herausforderungsfoto für morgen.';
+
+  @override
+  String get smileCaptureButton => 'Lächel-Foto machen';
+
+  @override
+  String get smileCaptureSavedTitle => 'Lächeln gespeichert!';
+
+  @override
+  String get smileCaptureSavedSubtitle =>
+      'Es ist bereit für die nächste Putzrunde.';
 
   @override
   String get cameraPreviewFallback =>

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:better_brushing/app.dart';
@@ -25,5 +26,77 @@ void main() {
 
     expect(find.text('2:00'), findsOneWidget);
     expect(find.text('Top left'), findsOneWidget);
+  });
+
+  testWidgets('adds and selects a kid profile', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      BrushingApp(
+        availableCameras: const [],
+        settingsController: AppSettingsController(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Add kid profile'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(EditableText), 'Mina');
+    await tester.tap(find.text('🤩'));
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mina'), findsOneWidget);
+    expect(find.text('🤩'), findsOneWidget);
+  });
+
+  testWidgets('removes a kid profile', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      BrushingApp(
+        availableCameras: const [],
+        settingsController: AppSettingsController(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Add kid profile'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText), 'Mina');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.text('Mina'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Remove'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mina'), findsNothing);
+    expect(find.text('Kid'), findsOneWidget);
+  });
+
+  testWidgets('renames a kid profile', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      BrushingApp(
+        availableCameras: const [],
+        settingsController: AppSettingsController(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Add kid profile'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText), 'Mina');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.text('Mina'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText), 'Lina');
+    await tester.tap(find.text('😊'));
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mina'), findsNothing);
+    expect(find.text('Lina'), findsOneWidget);
+    expect(find.text('😊'), findsOneWidget);
   });
 }
